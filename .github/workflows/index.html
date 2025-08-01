@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Clicker</title>
+  <title>Кликер</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
@@ -85,8 +85,8 @@
       width: 8px; height: 12px;
       opacity: 0.7;
     }
-    .theme-switcher {
-      margin-top: 24px;
+    .theme-switcher, .lang-switcher {
+      margin-top: 16px;
       font-size: 1.1em;
       background: #fff8;
       border-radius: 16px;
@@ -95,8 +95,10 @@
       cursor: pointer;
       color: var(--watermelon-seed);
       transition: background 0.3s, color 0.3s;
+      display: inline-block;
+      margin-right: 12px;
     }
-    body.dark .theme-switcher {
+    body.dark .theme-switcher, body.dark .lang-switcher {
       background: #2228;
       color: #fff;
       border-color: #1b5e2055;
@@ -104,7 +106,7 @@
   </style>
 </head>
 <body>
-  <h1>🍉 Clicker Game</h1>
+  <h1 id="title">🍉 Кликер</h1>
   <div>
     <span class="seed"></span>
     <span class="seed"></span>
@@ -112,10 +114,10 @@
     <span class="seed"></span>
     <span class="seed"></span>
   </div>
-  <div id="coins">Coins: 0</div>
+  <div id="coins">Монеты: 0</div>
   <br>
-  <button class="watermelon-btn" onclick="clickCoin()">
-    Click!
+  <button class="watermelon-btn" id="click-btn" onclick="clickCoin()">
+    Клик!
     <div class="seeds-on-btn">
       <span class="seed small" style="top:10px;left:5px;position:absolute;"></span>
       <span class="seed small" style="top:28px;left:38px;position:absolute;"></span>
@@ -123,16 +125,44 @@
     </div>
   </button>
   <br>
-  <button class="theme-switcher" onclick="toggleTheme()">🌗 Переключить тему</button>
+  <button class="theme-switcher" id="theme-btn" onclick="toggleTheme()">🌗 Переключить тему</button>
+  <button class="lang-switcher" id="lang-btn" onclick="toggleLang()">🇷🇺 Русский</button>
 
   <script>
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
+
     let coins = 0;
+    let lang = 'ru';
+
+    const texts = {
+      ru: {
+        title: "🍉 Кликер",
+        coins: "Монеты: ",
+        click: "Клик!",
+        theme: "🌗 Переключить тему",
+        lang: "🇬🇧 English",
+      },
+      en: {
+        title: "🍉 Clicker",
+        coins: "Coins: ",
+        click: "Click!",
+        theme: "🌗 Switch theme",
+        lang: "🇷🇺 Русский",
+      }
+    };
+
+    function updateLang() {
+      document.getElementById("title").innerText = texts[lang].title;
+      document.getElementById("coins").innerText = texts[lang].coins + coins;
+      document.getElementById("click-btn").childNodes[0].textContent = texts[lang].click;
+      document.getElementById("theme-btn").innerText = texts[lang].theme;
+      document.getElementById("lang-btn").innerText = texts[lang].lang;
+    }
+
     function clickCoin() {
       coins++;
-      document.getElementById("coins").innerText = "Coins: " + coins;
-      // Плавающие семечки при клике
+      document.getElementById("coins").innerText = texts[lang].coins + coins;
       popSeed();
     }
 
@@ -158,6 +188,14 @@
     function toggleTheme() {
       document.body.classList.toggle('dark');
     }
+
+    function toggleLang() {
+      lang = lang === 'ru' ? 'en' : 'ru';
+      updateLang();
+    }
+
+    // Первичная установка
+    updateLang();
   </script>
 </body>
 </html>
