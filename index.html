@@ -16,6 +16,27 @@
       -webkit-touch-callout: none;
       -webkit-user-drag: none;
     }
+    body.debug-on, #debug {
+      user-select: text !important;
+      -webkit-user-select: text !important;
+    }
+    #debug {
+      position:fixed;bottom:0;left:0;
+      z-index:9999;color:#ff0;background:#000a;
+      padding:4px 12px;font-size:12px; pointer-events: auto;
+      min-height: 22px;
+      width: 100vw;
+      display: none;
+      white-space: pre-line;
+      font-family: monospace;
+    }
+    body.debug-on #debug {
+      display: block;
+    }
+    *:not(#debug):not(#settings-menu), *:not(#debug):not(#settings-menu) * {
+      user-select: none !important;
+      -webkit-user-select: none !important;
+    }
     canvas.bg {
       position: absolute;
       z-index: 0;
@@ -48,6 +69,7 @@
       animation: rise 1s ease-out forwards;
       color: #00ff88;
       font-size: 20px;
+      user-select: none;
     }
     .particle.auto {
       color: #008844cc;
@@ -101,6 +123,26 @@
       transition: transform 0.2s;
       user-select: none;
     }
+    #settings-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 4;
+      background: #00ffaa;
+      color: #002e00;
+      border: none;
+      padding: 10px 16px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00ffaa;
+      transition: transform 0.2s;
+      user-select: none;
+    }
+    #settings-btn:hover {
+      background: #33ffd7;
+    }
     #upgrade-btn:hover {
       transform: scale(1.05);
     }
@@ -109,7 +151,7 @@
       bottom: -100%;
       left: 0;
       width: 100%;
-      height: 300px;
+      height: 380px;
       background: rgba(0, 0, 0, 0.9);
       color: #00ff88;
       z-index: 5;
@@ -147,6 +189,7 @@
       padding: 10px;
       border-radius: 10px;
       box-shadow: 0 0 8px #00ff88aa;
+      user-select: none;
     }
     .upgrade-item img {
       width: 48px;
@@ -194,6 +237,66 @@
     .upgrade-buy:hover:not(:disabled) {
       background-color: #33ff99;
     }
+    #settings-menu {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      min-width: 280px;
+      background: #022e22f2;
+      color: #00ffaa;
+      z-index: 20;
+      border-radius: 18px;
+      box-shadow: 0 0 30px #00ff88, 0 0 2px #000;
+      padding: 24px 28px 18px 28px;
+      display: none;
+      flex-direction: column;
+      align-items: flex-start;
+      font-size: 17px;
+      font-family: Arial,sans-serif;
+      user-select: text !important;
+    }
+    #settings-menu.active {
+      display: flex;
+    }
+    #close-settings {
+      position: absolute;
+      top: 8px;
+      right: 18px;
+      background: transparent;
+      border: none;
+      font-size: 28px;
+      color: #00ffaa;
+      cursor: pointer;
+      user-select: none;
+    }
+    .settings-title {
+      margin-top: 0;
+      color: #00ffaa;
+      font-size: 22px;
+      user-select: none;
+    }
+    .settings-row {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+    }
+    .settings-row label {
+      margin-left: 8px;
+      font-size: 15px;
+      color: #a0ffaa;
+      cursor: pointer;
+      user-select: none;
+    }
+    .fun-fact {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #fffc7f;
+      font-style: italic;
+      background: #01442188;
+      border-radius: 7px;
+      padding: 4px 7px 2px 7px;
+      user-select: text;
+    }
     #offline-banner {
       display: none;
       position: fixed;
@@ -220,11 +323,6 @@
       box-shadow: 0 0 8px #00ff88;
       margin-top: 12px;
     }
-    #debug {
-      position:fixed;bottom:0;left:0;
-      z-index:9999;color:#ff0;background:#000a;
-      padding:4px;font-size:12px; pointer-events: none;
-    }
   </style>
 </head>
 <body oncontextmenu="return false;">
@@ -233,6 +331,7 @@
   <img src="assets/click.png" id="clicker" alt="Арбуз" />
   <div id="username">@unknown</div>
   <button id="upgrade-btn">Улучшения</button>
+  <button id="settings-btn">⚙️ Настройки</button>
   <div id="upgrade-menu" aria-label="Меню улучшений" role="dialog" aria-modal="true">
     <button id="close-upgrades" aria-label="Закрыть меню улучшений">×</button>
     <h2>Улучшения</h2>
@@ -254,42 +353,110 @@
       </div>
       <button class="upgrade-buy" id="buy-auto">Купить</button>
     </div>
+    <div class="upgrade-item" id="upgrade-farm">
+      <img src="assets/wm-farm.png" alt="Арбузная ферма" />
+      <div class="upgrade-info">
+        <h3>Арбузная ферма</h3>
+        <p>Легендарная арбузная ферма! Теперь каждый клик приносит на 50% больше арбузиков.<br>
+        <span style="color:#f6c144">Огромные сочные арбузы растут сами, а вокруг них бегают солнечные зайчики и поют птицы. Фермеры завидуют!</span></p>
+        <p>Стоимость: 500 арбузиков</p>
+      </div>
+      <button class="upgrade-buy" id="buy-farm">Купить</button>
+    </div>
   </div>
   <div id="offline-banner">
     <div id="offline-msg" style="font-size:22px; margin-bottom:18px;"></div>
     <button id="collect-offline">Собрать</button>
   </div>
-  <audio id="click-sound" src="assets/click.mp3" preload="auto"></audio>
-  <audio id="message-sound" src="assets/message.mp3" preload="auto"></audio>
+  <div id="settings-menu" aria-label="Меню настроек" role="dialog" aria-modal="true">
+    <button id="close-settings" aria-label="Закрыть меню настроек">×</button>
+    <h2 class="settings-title">Настройки</h2>
+    <div class="settings-row">
+      <input type="checkbox" id="toggle-debug"/>
+      <label for="toggle-debug">Показать debug-бар</label>
+    </div>
+    <div class="settings-row">
+      <input type="checkbox" id="toggle-funfact"/>
+      <label for="toggle-funfact">Показывать случайный факт</label>
+    </div>
+    <div class="settings-row">
+      <input type="checkbox" id="toggle-random-bg"/>
+      <label for="toggle-random-bg">Крутой случайный фон</label>
+    </div>
+    <div class="fun-fact" id="fun-fact" style="display:none"></div>
+  </div>
   <div id="debug"></div>
   <script>
+    // --- Функция дебага ---
     function debug(msg) {
-      document.getElementById('debug').textContent = msg;
+      if (window.debugEnabled) {
+        document.getElementById('debug').textContent = msg;
+      }
       console.log('[DEBUG]', msg);
     }
+    function setDebug(enabled) {
+      window.debugEnabled = enabled;
+      if (enabled) {
+        document.body.classList.add("debug-on");
+        document.getElementById('debug').style.display = "block";
+      } else {
+        document.body.classList.remove("debug-on");
+        document.getElementById('debug').style.display = "none";
+      }
+    }
+    // --- Факты для настроек ---
+    const funFacts = [
+      "Арбузы на 92% состоят из воды.",
+      "Самый тяжёлый арбуз весил более 159 кг.",
+      "Арбуз — не фрукт, а ягода.",
+      "В Китае арбузы едят даже жареными!",
+      "В Японии выращивают квадратные арбузы."
+    ];
+    function showRandomFact() {
+      const fact = funFacts[Math.floor(Math.random()*funFacts.length)];
+      document.getElementById("fun-fact").textContent = fact;
+      document.getElementById("fun-fact").style.display = "block";
+    }
+    function hideFact() {
+      document.getElementById("fun-fact").style.display = "none";
+    }
+    // --- Основной код ---
     window.addEventListener('DOMContentLoaded', function() {
+      // Основные переменные
       let count = Number(localStorage.getItem("watermelons") || 0);
       let clickValue = Number(localStorage.getItem("clickValue") || 1);
       let autoClickerBought = localStorage.getItem("autoClickerBought") === "true";
       let doubleClickBought = localStorage.getItem("doubleClickBought") === "true";
+      let farmBought = localStorage.getItem("farmBought") === "true";
       let lastClickX = null;
       let lastClickY = null;
       let autoInterval = null;
 
+      // Элементы DOM
       const counter = document.getElementById("counter");
       const clicker = document.getElementById("clicker");
       const upgradeBtn = document.getElementById("upgrade-btn");
+      const settingsBtn = document.getElementById("settings-btn");
       const upgradeMenu = document.getElementById("upgrade-menu");
       const closeBtn = document.getElementById("close-upgrades");
       const buyDoubleClickBtn = document.getElementById("buy-double-click");
       const buyAutoBtn = document.getElementById("buy-auto");
-      const clickSound = document.getElementById("click-sound");
-      const messageSound = document.getElementById("message-sound");
-
-      // Оффлайн доход
+      const buyFarmBtn = document.getElementById("buy-farm");
+      const debugDiv = document.getElementById('debug');
       const offlineBanner = document.getElementById("offline-banner");
       const offlineMsg = document.getElementById("offline-msg");
       const collectOffline = document.getElementById("collect-offline");
+      const settingsMenu = document.getElementById("settings-menu");
+      const closeSettings = document.getElementById("close-settings");
+      const toggleDebug = document.getElementById("toggle-debug");
+      const toggleFunFact = document.getElementById("toggle-funfact");
+      const toggleRandomBg = document.getElementById("toggle-random-bg");
+      const funFactDiv = document.getElementById("fun-fact");
+
+      // Настройки (user-select)
+      document.body.addEventListener('copy', function(e) {
+        if (!window.debugEnabled) e.preventDefault();
+      });
 
       function updateCounter() {
         counter.textContent = `Арбузики: ${count}`;
@@ -299,6 +466,7 @@
         localStorage.setItem("clickValue", clickValue);
         localStorage.setItem("autoClickerBought", autoClickerBought ? "true" : "");
         localStorage.setItem("doubleClickBought", doubleClickBought ? "true" : "");
+        localStorage.setItem("farmBought", farmBought ? "true" : "");
         localStorage.setItem("lastPlayed", Date.now());
       }
       function createParticle(x, y, text, isAuto = false) {
@@ -322,23 +490,18 @@
         createParticle(e.clientX, e.clientY, "+" + clickValue);
         lastClickX = e.clientX;
         lastClickY = e.clientY;
-        if (clickSound) {
-          clickSound.currentTime = 0;
-          clickSound.play().catch(err => {
-            debug('Ошибка воспроизведения click.mp3: ' + err);
-          });
-        }
         checkUpgradesAvailability();
       });
 
       function checkUpgradesAvailability() {
         buyDoubleClickBtn.disabled = !(count >= 100 && !doubleClickBought);
         buyAutoBtn.disabled = !(count >= 200 && !autoClickerBought);
+        buyFarmBtn.disabled = !(count >= 500 && !farmBought);
       }
       buyDoubleClickBtn.addEventListener("click", () => {
         if (count >= 100 && !doubleClickBought) {
           count -= 100;
-          clickValue = 2;
+          clickValue = farmBought ? Math.floor(2*1.5) : 2;
           doubleClickBought = true;
           updateCounter();
           saveAll();
@@ -359,12 +522,24 @@
           checkUpgradesAvailability();
         }
       });
+      buyFarmBtn.addEventListener("click", () => {
+        if (count >= 500 && !farmBought) {
+          count -= 500;
+          farmBought = true;
+          clickValue = doubleClickBought ? Math.floor(2*1.5) : Math.floor(1*1.5);
+          updateCounter();
+          saveAll();
+          buyFarmBtn.disabled = true;
+          buyFarmBtn.textContent = "Куплено";
+          checkUpgradesAvailability();
+        }
+      });
 
       function initUpgrades() {
         if (doubleClickBought) {
           buyDoubleClickBtn.disabled = true;
           buyDoubleClickBtn.textContent = "Куплено";
-          clickValue = 2;
+          clickValue = farmBought ? Math.floor(2*1.5) : 2;
         } else {
           buyDoubleClickBtn.disabled = true;
         }
@@ -374,6 +549,13 @@
           startAutoClicker();
         } else {
           buyAutoBtn.disabled = true;
+        }
+        if (farmBought) {
+          buyFarmBtn.disabled = true;
+          buyFarmBtn.textContent = "Куплено";
+          clickValue = doubleClickBought ? Math.floor(2*1.5) : Math.floor(1*1.5);
+        } else {
+          buyFarmBtn.disabled = true;
         }
       }
 
@@ -408,17 +590,11 @@
         let offlineSecs = Math.floor((now - lastPlayed) / 1000);
         offlineSecs = Math.min(offlineSecs, 600); // максимум 10 минут
         let offlineReward = 0;
-        if (autoClickerBought && offlineSecs >= 10) { // только если куплен автокликер и был оффлайн хотя бы 10 сек
+        if (autoClickerBought && offlineSecs >= 10) {
           offlineReward = offlineSecs * clickValue;
           offlineBanner.style.display = "";
           offlineMsg.innerHTML =
             `Ты был(а) оффлайн <b>${Math.floor(offlineSecs / 60)} мин. ${offlineSecs % 60} сек.</b><br>Твой доход: <b>${offlineReward} арбузиков</b>`;
-          if (messageSound) {
-            messageSound.currentTime = 0;
-            messageSound.play().catch(err => {
-              debug('Ошибка воспроизведения message.mp3: ' + err);
-            });
-          }
           collectOffline.onclick = function() {
             count += offlineReward;
             updateCounter();
@@ -433,6 +609,63 @@
         }
       }
 
+      // Настройки
+      settingsBtn.addEventListener("click", () => {
+        settingsMenu.classList.add("active");
+      });
+      closeSettings.addEventListener("click", () => {
+        settingsMenu.classList.remove("active");
+      });
+      toggleDebug.addEventListener("change", function() {
+        setDebug(this.checked);
+        localStorage.setItem("debugEnabled", this.checked ? "1" : "0");
+      });
+      toggleFunFact.addEventListener("change", function() {
+        if (this.checked) {
+          showRandomFact();
+          localStorage.setItem("funFactEnabled", "1");
+        } else {
+          hideFact();
+          localStorage.setItem("funFactEnabled", "0");
+        }
+      });
+      toggleRandomBg.addEventListener("change", function() {
+        if (this.checked) {
+          document.body.style.background =
+            'radial-gradient(ellipse at center, #' +
+            Math.floor(Math.random()*16777215).toString(16).padStart(6,0) +
+            ' 0%, #'+
+            Math.floor(Math.random()*16777215).toString(16).padStart(6,0) +
+            ' 100%)';
+          localStorage.setItem("randBgEnabled", "1");
+        } else {
+          document.body.style.background =
+            "radial-gradient(ellipse at center, #014421 0%, #000000 100%)";
+          localStorage.setItem("randBgEnabled", "0");
+        }
+      });
+      // Инициализация опций
+      if (localStorage.getItem("debugEnabled")==="1") {
+        toggleDebug.checked = true;
+        setDebug(true);
+      }
+      if (localStorage.getItem("funFactEnabled")==="1") {
+        toggleFunFact.checked = true;
+        showRandomFact();
+      }
+      if (localStorage.getItem("randBgEnabled")==="1") {
+        toggleRandomBg.checked = true;
+        toggleRandomBg.dispatchEvent(new Event('change'));
+      }
+
+      // Убираем возможность копировать всё, кроме debug и меню настроек
+      document.querySelectorAll("*:not(#debug):not(#settings-menu)").forEach(el => {
+        el.addEventListener('copy', function(e) {
+          if (!window.debugEnabled) e.preventDefault();
+        });
+      });
+
+      // Улучшения
       checkUpgradesAvailability();
       updateCounter();
       initUpgrades();
@@ -503,7 +736,6 @@
       closeBtn.addEventListener("click", () => {
         upgradeMenu.classList.remove("active");
       });
-
     });
   </script>
 </body>
