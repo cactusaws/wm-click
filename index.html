@@ -16,7 +16,7 @@
       -webkit-touch-callout: none;
       -webkit-user-drag: none;
     }
-    body.debug-on, #debug {
+    body.debug-on, #debug, #settings-menu, #settings-menu * {
       user-select: text !important;
       -webkit-user-select: text !important;
     }
@@ -29,11 +29,16 @@
       display: none;
       white-space: pre-line;
       font-family: monospace;
+      border-top: 1px solid #444;
+      box-sizing: border-box;
+      opacity: .97;
+      max-height: 120px;
+      overflow-y: auto;
     }
     body.debug-on #debug {
       display: block;
     }
-    *:not(#debug):not(#settings-menu), *:not(#debug):not(#settings-menu) * {
+    *:not(#debug):not(#settings-menu):not(#settings-menu *), *:not(#debug):not(#settings-menu):not(#settings-menu *) * {
       user-select: none !important;
       -webkit-user-select: none !important;
     }
@@ -279,13 +284,42 @@
       margin-bottom: 16px;
       display: flex;
       align-items: center;
-    }
-    .settings-row label {
-      margin-left: 8px;
-      font-size: 15px;
-      color: #a0ffaa;
-      cursor: pointer;
       user-select: none;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 25px;
+      margin-right: 10px;
+    }
+    .switch input {display:none;}
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #006644;
+      border-radius: 25px;
+      transition: .3s;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 19px;
+      width: 19px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: .3s;
+      box-shadow: 0 0 5px #00ff88cc;
+    }
+    input:checked + .slider {
+      background: #00ffaa;
+    }
+    input:checked + .slider:before {
+      transform: translateX(21px);
+      background: #00ff88;
     }
     .fun-fact {
       margin: 0 0 8px 0;
@@ -331,7 +365,7 @@
   <img src="assets/click.png" id="clicker" alt="Арбуз" />
   <div id="username">@unknown</div>
   <button id="upgrade-btn">Улучшения</button>
-  <button id="settings-btn">⚙️ Настройки</button>
+  <button id="settings-btn">Настройки</button>
   <div id="upgrade-menu" aria-label="Меню улучшений" role="dialog" aria-modal="true">
     <button id="close-upgrades" aria-label="Закрыть меню улучшений">×</button>
     <h2>Улучшения</h2>
@@ -357,8 +391,7 @@
       <img src="assets/wm-farm.png" alt="Арбузная ферма" />
       <div class="upgrade-info">
         <h3>Арбузная ферма</h3>
-        <p>Легендарная арбузная ферма! Теперь каждый клик приносит на 50% больше арбузиков.<br>
-        <span style="color:#f6c144">Огромные сочные арбузы растут сами, а вокруг них бегают солнечные зайчики и поют птицы. Фермеры завидуют!</span></p>
+        <p>Каждый клик приносит на 50% больше арбузиков.</p>
         <p>Стоимость: 500 арбузиков</p>
       </div>
       <button class="upgrade-buy" id="buy-farm">Купить</button>
@@ -372,25 +405,39 @@
     <button id="close-settings" aria-label="Закрыть меню настроек">×</button>
     <h2 class="settings-title">Настройки</h2>
     <div class="settings-row">
-      <input type="checkbox" id="toggle-debug"/>
+      <label class="switch">
+        <input type="checkbox" id="toggle-debug"/>
+        <span class="slider"></span>
+      </label>
       <label for="toggle-debug">Показать debug-бар</label>
     </div>
     <div class="settings-row">
-      <input type="checkbox" id="toggle-funfact"/>
+      <label class="switch">
+        <input type="checkbox" id="toggle-funfact"/>
+        <span class="slider"></span>
+      </label>
       <label for="toggle-funfact">Показывать случайный факт</label>
     </div>
     <div class="settings-row">
-      <input type="checkbox" id="toggle-random-bg"/>
+      <label class="switch">
+        <input type="checkbox" id="toggle-random-bg"/>
+        <span class="slider"></span>
+      </label>
       <label for="toggle-random-bg">Крутой случайный фон</label>
     </div>
     <div class="fun-fact" id="fun-fact" style="display:none"></div>
   </div>
   <div id="debug"></div>
   <script>
-    // --- Функция дебага ---
+    // --- Функция дебага c историей ---
+    let debugLog = [];
     function debug(msg) {
       if (window.debugEnabled) {
-        document.getElementById('debug').textContent = msg;
+        const now = new Date();
+        const stamp = now.toLocaleTimeString();
+        debugLog.push(`[${stamp}] ${msg}`);
+        if (debugLog.length > 12) debugLog.shift();
+        document.getElementById('debug').textContent = debugLog.join('\n');
       }
       console.log('[DEBUG]', msg);
     }
@@ -399,6 +446,7 @@
       if (enabled) {
         document.body.classList.add("debug-on");
         document.getElementById('debug').style.display = "block";
+        debug("debug-бар включён");
       } else {
         document.body.classList.remove("debug-on");
         document.getElementById('debug').style.display = "none";
@@ -416,9 +464,11 @@
       const fact = funFacts[Math.floor(Math.random()*funFacts.length)];
       document.getElementById("fun-fact").textContent = fact;
       document.getElementById("fun-fact").style.display = "block";
+      debug("Показан случайный факт");
     }
     function hideFact() {
       document.getElementById("fun-fact").style.display = "none";
+      debug("Случайный факт скрыт");
     }
     // --- Основной код ---
     window.addEventListener('DOMContentLoaded', function() {
@@ -431,6 +481,7 @@
       let lastClickX = null;
       let lastClickY = null;
       let autoInterval = null;
+      let offlineBannerOpened = false;
 
       // Элементы DOM
       const counter = document.getElementById("counter");
@@ -453,9 +504,12 @@
       const toggleRandomBg = document.getElementById("toggle-random-bg");
       const funFactDiv = document.getElementById("fun-fact");
 
-      // Настройки (user-select)
+      // Ограничить копирование (debug/settings - можно)
       document.body.addEventListener('copy', function(e) {
-        if (!window.debugEnabled) e.preventDefault();
+        if (!window.debugEnabled
+          && !settingsMenu.classList.contains("active")
+          && document.activeElement !== debugDiv
+        ) e.preventDefault();
       });
 
       function updateCounter() {
@@ -490,6 +544,7 @@
         createParticle(e.clientX, e.clientY, "+" + clickValue);
         lastClickX = e.clientX;
         lastClickY = e.clientY;
+        debug(`Клик! Получено +${clickValue}, всего: ${count}`);
         checkUpgradesAvailability();
       });
 
@@ -507,6 +562,7 @@
           saveAll();
           buyDoubleClickBtn.disabled = true;
           buyDoubleClickBtn.textContent = "Куплено";
+          debug("Улучшение куплено: Арбузный удвоитель. Клик теперь +" + clickValue);
           checkUpgradesAvailability();
         }
       });
@@ -518,6 +574,7 @@
           saveAll();
           buyAutoBtn.disabled = true;
           buyAutoBtn.textContent = "Куплено";
+          debug("Улучшение куплено: Автоматический арбузник. Автокликер активен.");
           startAutoClicker();
           checkUpgradesAvailability();
         }
@@ -531,6 +588,7 @@
           saveAll();
           buyFarmBtn.disabled = true;
           buyFarmBtn.textContent = "Куплено";
+          debug("Улучшение куплено: Арбузная ферма. Клик теперь +" + clickValue);
           checkUpgradesAvailability();
         }
       });
@@ -575,6 +633,7 @@
             y = rect.top + rect.height / 2;
           }
           createParticle(x, y, "+" + clickValue, true);
+          debug(`Автоклик: +${clickValue}, всего: ${count}`);
         }, 1000);
       }
 
@@ -583,7 +642,8 @@
         let now = Date.now();
         if (!lastPlayed || isNaN(lastPlayed)) {
           localStorage.setItem("lastPlayed", now);
-          debug('lastPlayed не был установлен, устанавливаем сейчас');
+          debug('Время последней игры не найдено, установлено сейчас.');
+          offlineBannerOpened = false;
           offlineBanner.style.display = "none";
           return;
         }
@@ -593,6 +653,7 @@
         if (autoClickerBought && offlineSecs >= 10) {
           offlineReward = offlineSecs * clickValue;
           offlineBanner.style.display = "";
+          offlineBannerOpened = true;
           offlineMsg.innerHTML =
             `Ты был(а) оффлайн <b>${Math.floor(offlineSecs / 60)} мин. ${offlineSecs % 60} сек.</b><br>Твой доход: <b>${offlineReward} арбузиков</b>`;
           collectOffline.onclick = function() {
@@ -600,25 +661,36 @@
             updateCounter();
             saveAll();
             offlineBanner.style.display = "none";
+            offlineBannerOpened = false;
             checkUpgradesAvailability();
+            debug(`Собрано оффлайн-дохода: +${offlineReward}, всего: ${count}`);
           }
-          debug('Показан оффлайн-доход: ' + offlineReward + ' арбузиков');
+          debug(`Открыто меню оффлайн-дохода: +${offlineReward} за ${offlineSecs} сек.`);
         } else {
           offlineBanner.style.display = "none";
-          debug('Оффлайн-доход не показан. autoClickerBought=' + autoClickerBought + ', offlineSecs=' + offlineSecs);
+          offlineBannerOpened = false;
+          if (!autoClickerBought)
+            debug('Нет оффлайн-дохода: автокликер не куплен');
+          else if (offlineSecs < 10)
+            debug('Нет оффлайн-дохода: мало времени оффлайн ('+offlineSecs+' сек)');
+          else
+            debug('Нет оффлайн-дохода: неизвестная причина');
         }
       }
 
       // Настройки
       settingsBtn.addEventListener("click", () => {
         settingsMenu.classList.add("active");
+        debug("Открыто меню настроек");
       });
       closeSettings.addEventListener("click", () => {
         settingsMenu.classList.remove("active");
+        debug("Закрыто меню настроек");
       });
       toggleDebug.addEventListener("change", function() {
         setDebug(this.checked);
         localStorage.setItem("debugEnabled", this.checked ? "1" : "0");
+        debug("debug-бар " + (this.checked ? "включён" : "выключен"));
       });
       toggleFunFact.addEventListener("change", function() {
         if (this.checked) {
@@ -638,10 +710,12 @@
             Math.floor(Math.random()*16777215).toString(16).padStart(6,0) +
             ' 100%)';
           localStorage.setItem("randBgEnabled", "1");
+          debug("Случайный фон установлен");
         } else {
           document.body.style.background =
             "radial-gradient(ellipse at center, #014421 0%, #000000 100%)";
           localStorage.setItem("randBgEnabled", "0");
+          debug("Фон сброшен на стандартный");
         }
       });
       // Инициализация опций
@@ -658,14 +732,7 @@
         toggleRandomBg.dispatchEvent(new Event('change'));
       }
 
-      // Убираем возможность копировать всё, кроме debug и меню настроек
-      document.querySelectorAll("*:not(#debug):not(#settings-menu)").forEach(el => {
-        el.addEventListener('copy', function(e) {
-          if (!window.debugEnabled) e.preventDefault();
-        });
-      });
-
-      // Улучшения
+      // Улучшения и интерфейс
       checkUpgradesAvailability();
       updateCounter();
       initUpgrades();
@@ -727,15 +794,19 @@
         const user = Telegram.WebApp.initDataUnsafe?.user;
         if (user?.username) {
           document.getElementById("username").textContent = "@" + user.username;
+          debug("Загружен Telegram-username");
         }
       }
 
       upgradeBtn.addEventListener("click", () => {
         upgradeMenu.classList.add("active");
+        debug("Открыто меню улучшений");
       });
       closeBtn.addEventListener("click", () => {
         upgradeMenu.classList.remove("active");
+        debug("Закрыто меню улучшений");
       });
+
     });
   </script>
 </body>
