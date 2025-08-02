@@ -8,127 +8,135 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      font-family: sans-serif;
-      background: linear-gradient(to top left, #0f0f0f, #1a1a1a);
+      font-family: 'Comic Sans MS', cursive;
+      background: black;
+    }
+
+    canvas.bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      width: 100vw;
       height: 100vh;
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      text-align: center;
       color: white;
     }
 
-    .space {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: 0;
-    }
-
-    .space img {
-      position: absolute;
-      width: 64px;
-      height: 64px;
-      animation: fly 20s linear infinite;
-      opacity: 0.3;
-    }
-
-    @keyframes fly {
-      0% {
-        transform: translate(100vw, 100vh) rotate(0deg);
-      }
-      100% {
-        transform: translate(-10vw, -10vh) rotate(720deg);
-      }
-    }
-
-    .center {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      z-index: 1;
-    }
-
-    .watermelon {
+    .clicker {
       width: 200px;
       cursor: pointer;
       transition: transform 0.1s;
     }
 
-    .watermelon:active {
-      transform: scale(1.1);
+    .clicker:active {
+      transform: scale(0.95);
     }
 
     .counter {
-      font-size: 2rem;
+      font-size: 32px;
       margin-top: 10px;
     }
 
     .particle {
       position: absolute;
-      font-size: 1.2rem;
-      color: #ff4;
+      color: #4fff4f;
+      font-size: 20px;
+      font-weight: bold;
       pointer-events: none;
-      opacity: 1;
-      animation: float 1s ease-out forwards;
-      z-index: 2;
+      animation: rise 1s ease-out forwards;
+      z-index: 100;
     }
 
-    @keyframes float {
-      0% { transform: translateY(0); opacity: 1; }
-      100% { transform: translateY(-50px); opacity: 0; }
+    @keyframes rise {
+      0% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
     }
   </style>
 </head>
 <body>
-  <div class="space" id="space"></div>
-
-  <div class="center">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Watermelon_icon.svg/512px-Watermelon_icon.svg.png" 
-         class="watermelon" id="melon" alt="Арбуз">
-    <div class="counter">Арбузиков: <span id="count">0</span></div>
+  <canvas class="bg"></canvas>
+  <div class="container">
+    <img src="click.png" alt="Click" class="clicker" id="clicker">
+    <div class="counter" id="counter">Арбузики: 0</div>
   </div>
 
   <script>
-    const melon = document.getElementById('melon');
-    const countDisplay = document.getElementById('count');
-    let count = Number(localStorage.getItem('melons') || 0);
-    const perClick = 1;
+    const canvas = document.querySelector('.bg');
+    const ctx = canvas.getContext('2d');
+    let w, h;
 
-    countDisplay.textContent = count;
+    const resize = () => {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', resize);
+    resize();
 
-    melon.addEventListener('click', (e) => {
-      count += perClick;
-      localStorage.setItem('melons', count);
-      countDisplay.textContent = count;
-      spawnParticle(e.clientX, e.clientY, `+${perClick}`);
+    const watermelonImg = new Image();
+    watermelonImg.src = 'bg.png';
+
+    const bgObjects = [];
+    for (let i = 0; i < 40; i++) {
+      bgObjects.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        speed: 0.5 + Math.random(),
+        size: 30 + Math.random() * 40,
+        angle: Math.random() * 2 * Math.PI
+      });
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, w, h);
+      for (let obj of bgObjects) {
+        obj.x -= obj.speed * Math.cos(Math.PI / 4);
+        obj.y -= obj.speed * Math.sin(Math.PI / 4);
+        if (obj.x < -100 || obj.y < -100) {
+          obj.x = w + Math.random() * 100;
+          obj.y = h + Math.random() * 100;
+        }
+        ctx.drawImage(watermelonImg, obj.x, obj.y, obj.size, obj.size);
+      }
+      requestAnimationFrame(drawBackground);
+    }
+
+    watermelonImg.onload = drawBackground;
+
+    // Click logic
+    let count = parseInt(localStorage.getItem('watermelons') || '0');
+    const counter = document.getElementById('counter');
+    const clicker = document.getElementById('clicker');
+
+    function updateCounter() {
+      counter.textContent = 'Арбузики: ' + count;
+      localStorage.setItem('watermelons', count);
+    }
+
+    clicker.addEventListener('click', (e) => {
+      count++;
+      updateCounter();
+      const part = document.createElement('div');
+      part.className = 'particle';
+      part.textContent = '+1';
+      part.style.left = (e.clientX - 10) + 'px';
+      part.style.top = (e.clientY - 20) + 'px';
+      document.body.appendChild(part);
+      setTimeout(() => part.remove(), 1000);
     });
 
-    function spawnParticle(x, y, text) {
-      const particle = document.createElement('div');
-      particle.className = 'particle';
-      particle.style.left = x + 'px';
-      particle.style.top = y + 'px';
-      particle.textContent = text;
-      document.body.appendChild(particle);
-      setTimeout(() => particle.remove(), 1000);
-    }
-
-    // generate floating watermelons
-    const space = document.getElementById('space');
-    function spawnMelons() {
-      for (let i = 0; i < 10 + Math.random() * 10; i++) {
-        const img = document.createElement('img');
-        img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Watermelon_icon.svg/512px-Watermelon_icon.svg.png';
-        img.style.left = Math.random() * window.innerWidth + 'px';
-        img.style.top = Math.random() * window.innerHeight + 'px';
-        img.style.animationDuration = (15 + Math.random() * 10) + 's';
-        space.appendChild(img);
-        setTimeout(() => img.remove(), 20000);
-      }
-    }
-    setInterval(spawnMelons, 4000);
-    spawnMelons();
+    updateCounter();
   </script>
 </body>
 </html>
