@@ -1,142 +1,170 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Арбуз Кликер</title>
+  <meta charset="UTF-8" />
+  <title>Кликер Арбузиков</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      font-family: 'Comic Sans MS', cursive;
       background: black;
+      height: 100vh;
+      font-family: 'Arial', sans-serif;
+      user-select: none;
     }
 
     canvas.bg {
-      position: fixed;
-      top: 0;
-      left: 0;
+      position: absolute;
       z-index: 0;
-      width: 100vw;
-      height: 100vh;
     }
 
-    .container {
-      position: relative;
+    #clicker {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       z-index: 2;
-      text-align: center;
-      color: white;
-    }
-
-    .clicker {
-      width: 200px;
       cursor: pointer;
-      transition: transform 0.1s;
+      width: 200px;
     }
 
-    .clicker:active {
-      transform: scale(0.95);
-    }
-
-    .counter {
-      font-size: 32px;
-      margin-top: 10px;
+    #counter {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: #00ff88;
+      font-size: 24px;
+      font-weight: bold;
+      z-index: 3;
+      text-shadow: 0 0 5px #00ff88;
     }
 
     .particle {
       position: absolute;
-      color: #4fff4f;
       font-size: 20px;
       font-weight: bold;
+      color: #00ff88;
+      z-index: 3;
       pointer-events: none;
       animation: rise 1s ease-out forwards;
-      z-index: 100;
     }
 
     @keyframes rise {
       0% {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0px) scale(1);
       }
       100% {
         opacity: 0;
-        transform: translateY(-50px);
+        transform: translateY(-50px) scale(1.5);
       }
+    }
+
+    #username {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      color: #00ffaa;
+      font-size: 16px;
+      z-index: 3;
+      text-shadow: 0 0 4px #00ffaa;
     }
   </style>
 </head>
 <body>
   <canvas class="bg"></canvas>
-  <div class="container">
-    <img src="click.png" alt="Click" class="clicker" id="clicker">
-    <div class="counter" id="counter">Арбузики: 0</div>
-  </div>
+
+  <div id="counter">Арбузики: 0</div>
+  <img src="click.png" id="clicker" alt="Арбуз" />
+  <div id="username">@unknown</div>
 
   <script>
-    const canvas = document.querySelector('.bg');
-    const ctx = canvas.getContext('2d');
-    let w, h;
-
-    const resize = () => {
-      w = canvas.width = window.innerWidth;
-      h = canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', resize);
-    resize();
-
-    const watermelonImg = new Image();
-    watermelonImg.src = 'bg.png';
-
-    const bgObjects = [];
-    for (let i = 0; i < 40; i++) {
-      bgObjects.push({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        speed: 0.5 + Math.random(),
-        size: 30 + Math.random() * 40,
-        angle: Math.random() * 2 * Math.PI
-      });
-    }
-
-    function drawBackground() {
-      ctx.clearRect(0, 0, w, h);
-      for (let obj of bgObjects) {
-        obj.x -= obj.speed * Math.cos(Math.PI / 4);
-        obj.y -= obj.speed * Math.sin(Math.PI / 4);
-        if (obj.x < -100 || obj.y < -100) {
-          obj.x = w + Math.random() * 100;
-          obj.y = h + Math.random() * 100;
-        }
-        ctx.drawImage(watermelonImg, obj.x, obj.y, obj.size, obj.size);
-      }
-      requestAnimationFrame(drawBackground);
-    }
-
-    watermelonImg.onload = drawBackground;
-
-    // Click logic
-    let count = parseInt(localStorage.getItem('watermelons') || '0');
-    const counter = document.getElementById('counter');
-    const clicker = document.getElementById('clicker');
+    let count = Number(localStorage.getItem("watermelons") || 0);
+    const counter = document.getElementById("counter");
+    const clicker = document.getElementById("clicker");
 
     function updateCounter() {
-      counter.textContent = 'Арбузики: ' + count;
-      localStorage.setItem('watermelons', count);
+      counter.textContent = `Арбузики: ${count}`;
     }
 
-    clicker.addEventListener('click', (e) => {
-      count++;
+    function createParticle(x, y, text) {
+      const particle = document.createElement("div");
+      particle.className = "particle";
+      particle.style.left = x + "px";
+      particle.style.top = y + "px";
+      particle.textContent = "+" + text;
+      document.body.appendChild(particle);
+
+      setTimeout(() => particle.remove(), 1000);
+    }
+
+    clicker.addEventListener("click", (e) => {
+      count += 1;
+      localStorage.setItem("watermelons", count);
       updateCounter();
-      const part = document.createElement('div');
-      part.className = 'particle';
-      part.textContent = '+1';
-      part.style.left = (e.clientX - 10) + 'px';
-      part.style.top = (e.clientY - 20) + 'px';
-      document.body.appendChild(part);
-      setTimeout(() => part.remove(), 1000);
+      createParticle(e.clientX, e.clientY, 1);
     });
 
     updateCounter();
+
+    // --- background animation ---
+    const canvas = document.querySelector(".bg");
+    const ctx = canvas.getContext("2d");
+    let W = canvas.width = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+
+    const bg = new Image();
+    bg.src = "bg.png";
+
+    const arbs = [];
+    const maxArbs = 30;
+
+    for (let i = 0; i < maxArbs; i++) {
+      arbs.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        size: 30 + Math.random() * 30,
+        speedX: -0.5 + Math.random(),
+        speedY: -0.5 + Math.random(),
+        opacity: 0.3 + Math.random() * 0.7,
+        angle: Math.random() * Math.PI * 2,
+        rotateSpeed: 0.01 + Math.random() * 0.02
+      });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      for (let a of arbs) {
+        ctx.save();
+        ctx.globalAlpha = a.opacity;
+        ctx.translate(a.x, a.y);
+        ctx.rotate(a.angle);
+        ctx.drawImage(bg, -a.size/2, -a.size/2, a.size, a.size);
+        ctx.restore();
+
+        a.x += a.speedX;
+        a.y += a.speedY;
+        a.angle += a.rotateSpeed;
+
+        if (a.x < -50) a.x = W + 50;
+        if (a.y < -50) a.y = H + 50;
+        if (a.x > W + 50) a.x = -50;
+        if (a.y > H + 50) a.y = -50;
+      }
+      requestAnimationFrame(draw);
+    }
+
+    bg.onload = draw;
+    window.addEventListener('resize', () => {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    });
+
+    // Telegram mini app username
+    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe?.user?.username) {
+      document.getElementById("username").textContent = "@" + Telegram.WebApp.initDataUnsafe.user.username;
+    }
   </script>
 </body>
 </html>
