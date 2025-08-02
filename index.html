@@ -194,6 +194,32 @@
     .upgrade-buy:hover:not(:disabled) {
       background-color: #33ff99;
     }
+    #offline-banner {
+      display: none;
+      position: fixed;
+      left: 50%;
+      top: 20%;
+      transform: translate(-50%,0);
+      z-index: 1000;
+      background: rgba(0,0,0,0.95);
+      color: #00ffaa;
+      padding: 32px 40px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px #00ff88;
+      text-align: center;
+    }
+    #offline-banner button {
+      background: #00ff88;
+      color: #000;
+      border: 0;
+      font-size: 19px;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 8px #00ff88;
+      margin-top: 12px;
+    }
   </style>
 </head>
 <body oncontextmenu="return false;">
@@ -224,7 +250,14 @@
       <button class="upgrade-buy" id="buy-auto">Купить</button>
     </div>
   </div>
+
+  <div id="offline-banner">
+    <div id="offline-msg" style="font-size:22px; margin-bottom:18px;"></div>
+    <button id="collect-offline">Собрать</button>
+  </div>
+
   <audio id="click-sound" src="assets/click.mp3" preload="auto"></audio>
+  <audio id="message-sound" src="assets/message.mp3" preload="auto"></audio>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
       let count = Number(localStorage.getItem("watermelons") || 0);
@@ -243,9 +276,22 @@
       const buyDoubleClickBtn = document.getElementById("buy-double-click");
       const buyAutoBtn = document.getElementById("buy-auto");
       const clickSound = document.getElementById("click-sound");
+      const messageSound = document.getElementById("message-sound");
+
+      // Оффлайн доход
+      const offlineBanner = document.getElementById("offline-banner");
+      const offlineMsg = document.getElementById("offline-msg");
+      const collectOffline = document.getElementById("collect-offline");
 
       function updateCounter() {
         counter.textContent = `Арбузики: ${count}`;
+      }
+      function saveAll() {
+        localStorage.setItem("watermelons", count);
+        localStorage.setItem("clickValue", clickValue);
+        localStorage.setItem("autoClickerBought", autoClickerBought ? "true" : "");
+        localStorage.setItem("doubleClickBought", doubleClickBought ? "true" : "");
+        localStorage.setItem("lastPlayed", Date.now());
       }
       function createParticle(x, y, text, isAuto = false) {
         const particle = document.createElement("div");
@@ -263,8 +309,8 @@
       }
       clicker.addEventListener("click", (e) => {
         count += clickValue;
-        localStorage.setItem("watermelons", count);
         updateCounter();
+        saveAll();
         createParticle(e.clientX, e.clientY, "+" + clickValue);
         lastClickX = e.clientX;
         lastClickY = e.clientY;
@@ -274,6 +320,7 @@
         }
         checkUpgradesAvailability();
       });
+
       function checkUpgradesAvailability() {
         buyDoubleClickBtn.disabled = !(count >= 100 && !doubleClickBought);
         buyAutoBtn.disabled = !(count >= 200 && !autoClickerBought);
@@ -281,12 +328,10 @@
       buyDoubleClickBtn.addEventListener("click", () => {
         if (count >= 100 && !doubleClickBought) {
           count -= 100;
-          localStorage.setItem("watermelons", count);
           clickValue = 2;
-          localStorage.setItem("clickValue", clickValue);
           doubleClickBought = true;
-          localStorage.setItem("doubleClickBought", "true");
           updateCounter();
+          saveAll();
           buyDoubleClickBtn.disabled = true;
           buyDoubleClickBtn.textContent = "Куплено";
           checkUpgradesAvailability();
@@ -295,22 +340,21 @@
       buyAutoBtn.addEventListener("click", () => {
         if (count >= 200 && !autoClickerBought) {
           count -= 200;
-          localStorage.setItem("watermelons", count);
           autoClickerBought = true;
-          localStorage.setItem("autoClickerBought", "true");
           updateCounter();
+          saveAll();
           buyAutoBtn.disabled = true;
           buyAutoBtn.textContent = "Куплено";
           startAutoClicker();
           checkUpgradesAvailability();
         }
       });
+
       function initUpgrades() {
         if (doubleClickBought) {
           buyDoubleClickBtn.disabled = true;
           buyDoubleClickBtn.textContent = "Куплено";
           clickValue = 2;
-          localStorage.setItem("clickValue", clickValue);
         } else {
           buyDoubleClickBtn.disabled = true;
         }
@@ -322,12 +366,13 @@
           buyAutoBtn.disabled = true;
         }
       }
+
       function startAutoClicker() {
         if (autoInterval) return;
         autoInterval = setInterval(() => {
           count += clickValue;
-          localStorage.setItem("watermelons", count);
           updateCounter();
+          saveAll();
           let x, y;
           if (lastClickX !== null && lastClickY !== null) {
             x = lastClickX;
@@ -340,9 +385,44 @@
           createParticle(x, y, "+" + clickValue, true);
         }, 1000);
       }
+
+      // --- Оффлайн-доход ---
+      function showOfflineIncome() {
+        let lastPlayed = Number(localStorage.getItem("lastPlayed")) || Date.now();
+        let now = Date.now();
+        let offlineSecs = Math.floor((now - lastPlayed) / 1000);
+        offlineSecs = Math.min(offlineSecs, 600); // максимум 10 минут
+        let offlineReward = 0;
+        if (autoClickerBought && offlineSecs >= 10) { // только если куплен автокликер и был оффлайн хотя бы 10 сек
+          offlineReward = offlineSecs * clickValue;
+          offlineBanner.style.display = "";
+          offlineMsg.innerHTML =
+            `Ты был(а) оффлайн <b>${Math.floor(offlineSecs / 60)} мин. ${offlineSecs % 60} сек.</b><br>Твой доход: <b>${offlineReward} арбузиков</b>`;
+          if (messageSound) {
+            messageSound.currentTime = 0;
+            messageSound.play();
+          }
+          collectOffline.onclick = function() {
+            count += offlineReward;
+            updateCounter();
+            saveAll();
+            offlineBanner.style.display = "none";
+            checkUpgradesAvailability();
+          }
+        } else {
+          offlineBanner.style.display = "none";
+        }
+      }
+
       checkUpgradesAvailability();
       updateCounter();
       initUpgrades();
+      showOfflineIncome();
+
+      // Сохранять время ухода при закрытии/перезагрузке
+      window.addEventListener("beforeunload", function() {
+        localStorage.setItem("lastPlayed", Date.now());
+      });
 
       // Фоновые арбузы
       const canvas = document.querySelector(".bg");
@@ -405,6 +485,7 @@
       closeBtn.addEventListener("click", () => {
         upgradeMenu.classList.remove("active");
       });
+
     });
   </script>
 </body>
