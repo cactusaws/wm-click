@@ -110,6 +110,7 @@
       box-sizing: border-box;
       border-top: 2px solid #00ff88;
       transition: bottom 0.4s ease;
+      overflow-y: auto;
     }
 
     #upgrade-menu.active {
@@ -131,6 +132,69 @@
       margin-top: 0;
       color: #00ffaa;
     }
+
+    /* Улучшение */
+    .upgrade-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+      background: #002e00aa;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px #00ff88aa;
+    }
+
+    .upgrade-item img {
+      width: 48px;
+      height: 48px;
+      margin-right: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px #00ff88;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .upgrade-info {
+      flex-grow: 1;
+    }
+
+    .upgrade-info h3 {
+      margin: 0 0 5px 0;
+      font-size: 20px;
+      color: #00ffaa;
+    }
+
+    .upgrade-info p {
+      margin: 0;
+      font-size: 14px;
+      color: #a0ffaa;
+    }
+
+    .upgrade-buy {
+      background: #00ff88;
+      border: none;
+      padding: 8px 12px;
+      font-weight: bold;
+      font-size: 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #000;
+      box-shadow: 0 0 5px #00ff88;
+      user-select: none;
+      transition: background-color 0.2s;
+    }
+
+    .upgrade-buy:disabled {
+      background: #005500;
+      cursor: default;
+      box-shadow: none;
+      color: #004400;
+    }
+
+    .upgrade-buy:hover:not(:disabled) {
+      background-color: #33ff99;
+    }
+
   </style>
 </head>
 <body oncontextmenu="return false;">
@@ -141,16 +205,32 @@
   <div id="username">@unknown</div>
   <button id="upgrade-btn">Улучшения</button>
 
-  <div id="upgrade-menu">
-    <button id="close-upgrades">×</button>
+  <div id="upgrade-menu" aria-label="Меню улучшений" role="dialog" aria-modal="true">
+    <button id="close-upgrades" aria-label="Закрыть меню улучшений">×</button>
     <h2>Улучшения</h2>
-    <p>Скоро здесь появятся полезные апгрейды!</p>
+
+    <div class="upgrade-item" id="upgrade-double-click">
+      <img src="assets/wm-2x.png" alt="Арбузный удвоитель" />
+      <div class="upgrade-info">
+        <h3>Арбузный удвоитель</h3>
+        <p>Теперь за клик даётся +2 арбузика вместо +1.</p>
+        <p>Стоимость: 100 арбузиков</p>
+      </div>
+      <button class="upgrade-buy" id="buy-double-click">Купить</button>
+    </div>
+
   </div>
 
   <script>
     let count = Number(localStorage.getItem("watermelons") || 0);
+    let clickValue = Number(localStorage.getItem("clickValue") || 1);
+
     const counter = document.getElementById("counter");
     const clicker = document.getElementById("clicker");
+    const upgradeBtn = document.getElementById("upgrade-btn");
+    const upgradeMenu = document.getElementById("upgrade-menu");
+    const closeBtn = document.getElementById("close-upgrades");
+    const buyDoubleClickBtn = document.getElementById("buy-double-click");
 
     function updateCounter() {
       counter.textContent = `Арбузики: ${count}`;
@@ -167,11 +247,43 @@
     }
 
     clicker.addEventListener("click", (e) => {
-      count += 1;
+      count += clickValue;
       localStorage.setItem("watermelons", count);
       updateCounter();
-      createParticle(e.clientX, e.clientY, 1);
+      createParticle(e.clientX, e.clientY, clickValue);
+      checkUpgradesAvailability();
     });
+
+    function checkUpgradesAvailability() {
+      if (count >= 100 && !localStorage.getItem("doubleClickBought")) {
+        buyDoubleClickBtn.disabled = false;
+      } else {
+        buyDoubleClickBtn.disabled = true;
+      }
+    }
+
+    buyDoubleClickBtn.addEventListener("click", () => {
+      if (count >= 100 && !localStorage.getItem("doubleClickBought")) {
+        count -= 100;
+        localStorage.setItem("watermelons", count);
+        clickValue = 2;
+        localStorage.setItem("clickValue", clickValue);
+        localStorage.setItem("doubleClickBought", "true");
+        updateCounter();
+        buyDoubleClickBtn.disabled = true;
+        buyDoubleClickBtn.textContent = "Куплено";
+      }
+    });
+
+    // Инициализация статуса кнопки при загрузке
+    if (localStorage.getItem("doubleClickBought")) {
+      buyDoubleClickBtn.disabled = true;
+      buyDoubleClickBtn.textContent = "Куплено";
+      clickValue = 2;
+      localStorage.setItem("clickValue", clickValue);
+    } else {
+      checkUpgradesAvailability();
+    }
 
     updateCounter();
 
@@ -241,10 +353,6 @@
     });
 
     // Upgrade menu toggle
-    const upgradeBtn = document.getElementById("upgrade-btn");
-    const upgradeMenu = document.getElementById("upgrade-menu");
-    const closeBtn = document.getElementById("close-upgrades");
-
     upgradeBtn.addEventListener("click", () => {
       upgradeMenu.classList.add("active");
     });
@@ -252,6 +360,7 @@
     closeBtn.addEventListener("click", () => {
       upgradeMenu.classList.remove("active");
     });
+
   </script>
 </body>
 </html>
