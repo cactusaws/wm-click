@@ -220,6 +220,11 @@
       box-shadow: 0 0 8px #00ff88;
       margin-top: 12px;
     }
+    #debug {
+      position:fixed;bottom:0;left:0;
+      z-index:9999;color:#ff0;background:#000a;
+      padding:4px;font-size:12px; pointer-events: none;
+    }
   </style>
 </head>
 <body oncontextmenu="return false;">
@@ -250,15 +255,18 @@
       <button class="upgrade-buy" id="buy-auto">Купить</button>
     </div>
   </div>
-
   <div id="offline-banner">
     <div id="offline-msg" style="font-size:22px; margin-bottom:18px;"></div>
     <button id="collect-offline">Собрать</button>
   </div>
-
   <audio id="click-sound" src="assets/click.mp3" preload="auto"></audio>
   <audio id="message-sound" src="assets/message.mp3" preload="auto"></audio>
+  <div id="debug"></div>
   <script>
+    function debug(msg) {
+      document.getElementById('debug').textContent = msg;
+      console.log('[DEBUG]', msg);
+    }
     window.addEventListener('DOMContentLoaded', function() {
       let count = Number(localStorage.getItem("watermelons") || 0);
       let clickValue = Number(localStorage.getItem("clickValue") || 1);
@@ -316,7 +324,9 @@
         lastClickY = e.clientY;
         if (clickSound) {
           clickSound.currentTime = 0;
-          clickSound.play();
+          clickSound.play().catch(err => {
+            debug('Ошибка воспроизведения click.mp3: ' + err);
+          });
         }
         checkUpgradesAvailability();
       });
@@ -386,7 +396,6 @@
         }, 1000);
       }
 
-      // --- Оффлайн-доход ---
       function showOfflineIncome() {
         let lastPlayed = Number(localStorage.getItem("lastPlayed")) || Date.now();
         let now = Date.now();
@@ -400,7 +409,9 @@
             `Ты был(а) оффлайн <b>${Math.floor(offlineSecs / 60)} мин. ${offlineSecs % 60} сек.</b><br>Твой доход: <b>${offlineReward} арбузиков</b>`;
           if (messageSound) {
             messageSound.currentTime = 0;
-            messageSound.play();
+            messageSound.play().catch(err => {
+              debug('Ошибка воспроизведения message.mp3: ' + err);
+            });
           }
           collectOffline.onclick = function() {
             count += offlineReward;
@@ -409,8 +420,10 @@
             offlineBanner.style.display = "none";
             checkUpgradesAvailability();
           }
+          debug('Показан оффлайн-доход: ' + offlineReward + ' арбузиков');
         } else {
           offlineBanner.style.display = "none";
+          debug('Оффлайн-доход не показан. autoClickerBought=' + autoClickerBought + ', offlineSecs=' + offlineSecs);
         }
       }
 
@@ -419,7 +432,6 @@
       initUpgrades();
       showOfflineIncome();
 
-      // Сохранять время ухода при закрытии/перезагрузке
       window.addEventListener("beforeunload", function() {
         localStorage.setItem("lastPlayed", Date.now());
       });
