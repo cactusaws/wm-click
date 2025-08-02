@@ -75,6 +75,62 @@
       text-shadow: 0 0 4px #00ffaa;
       pointer-events: none;
     }
+
+    #upgrade-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      z-index: 4;
+      background: #00ff88;
+      color: #000;
+      border: none;
+      padding: 10px 16px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00ff88;
+      transition: transform 0.2s;
+    }
+
+    #upgrade-btn:hover {
+      transform: scale(1.05);
+    }
+
+    #upgrade-menu {
+      position: absolute;
+      bottom: -100%;
+      left: 0;
+      width: 100%;
+      height: 300px;
+      background: rgba(0, 0, 0, 0.9);
+      color: #00ff88;
+      z-index: 5;
+      padding: 20px;
+      box-sizing: border-box;
+      border-top: 2px solid #00ff88;
+      transition: bottom 0.4s ease;
+    }
+
+    #upgrade-menu.active {
+      bottom: 0;
+    }
+
+    #close-upgrades {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      color: #00ffaa;
+      cursor: pointer;
+    }
+
+    #upgrade-menu h2 {
+      margin-top: 0;
+      color: #00ffaa;
+    }
   </style>
 </head>
 <body oncontextmenu="return false;">
@@ -83,6 +139,13 @@
   <div id="counter">Арбузики: 0</div>
   <img src="click.png" id="clicker" alt="Арбуз" />
   <div id="username">@unknown</div>
+  <button id="upgrade-btn">Улучшения</button>
+
+  <div id="upgrade-menu">
+    <button id="close-upgrades">×</button>
+    <h2>Улучшения</h2>
+    <p>Скоро здесь появятся полезные апгрейды!</p>
+  </div>
 
   <script>
     let count = Number(localStorage.getItem("watermelons") || 0);
@@ -112,7 +175,7 @@
 
     updateCounter();
 
-    // --- animated background with watermelons ---
+    // --- background ---
     const canvas = document.querySelector(".bg");
     const ctx = canvas.getContext("2d");
     let W = canvas.width = window.innerWidth;
@@ -144,7 +207,7 @@
         ctx.globalAlpha = a.opacity;
         ctx.translate(a.x, a.y);
         ctx.rotate(a.angle);
-        ctx.drawImage(bg, -a.size/2, -a.size/2, a.size, a.size);
+        ctx.drawImage(bg, -a.size / 2, -a.size / 2, a.size, a.size);
         ctx.restore();
 
         a.x += a.speedX;
@@ -160,12 +223,13 @@
     }
 
     bg.onload = draw;
+
     window.addEventListener('resize', () => {
       W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
     });
 
-    // Telegram WebApp username
+    // Telegram username
     window.addEventListener("DOMContentLoaded", () => {
       if (window.Telegram && Telegram.WebApp) {
         Telegram.WebApp.ready();
@@ -174,6 +238,19 @@
           document.getElementById("username").textContent = "@" + user.username;
         }
       }
+    });
+
+    // Upgrade menu toggle
+    const upgradeBtn = document.getElementById("upgrade-btn");
+    const upgradeMenu = document.getElementById("upgrade-menu");
+    const closeBtn = document.getElementById("close-upgrades");
+
+    upgradeBtn.addEventListener("click", () => {
+      upgradeMenu.classList.add("active");
+    });
+
+    closeBtn.addEventListener("click", () => {
+      upgradeMenu.classList.remove("active");
     });
   </script>
 </body>
