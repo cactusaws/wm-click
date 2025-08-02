@@ -397,8 +397,14 @@
       }
 
       function showOfflineIncome() {
-        let lastPlayed = Number(localStorage.getItem("lastPlayed")) || Date.now();
+        let lastPlayed = Number(localStorage.getItem("lastPlayed"));
         let now = Date.now();
+        if (!lastPlayed || isNaN(lastPlayed)) {
+          localStorage.setItem("lastPlayed", now);
+          debug('lastPlayed не был установлен, устанавливаем сейчас');
+          offlineBanner.style.display = "none";
+          return;
+        }
         let offlineSecs = Math.floor((now - lastPlayed) / 1000);
         offlineSecs = Math.min(offlineSecs, 600); // максимум 10 минут
         let offlineReward = 0;
