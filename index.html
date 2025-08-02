@@ -12,6 +12,12 @@
       --watermelon-light: #f2f2f2;
       --watermelon-dark: #202020;
     }
+    * {
+      user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      -moz-user-select: none;
+    }
     body {
       text-align: center;
       font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif;
@@ -19,6 +25,8 @@
       transition: background 0.5s, color 0.5s;
       color: var(--watermelon-dark);
       min-height: 100vh;
+      margin: 0;
+      padding: 0;
     }
     body.dark {
       background: linear-gradient(135deg, #1b5e20 0%, #b71c1c 100%);
@@ -55,36 +63,26 @@
       background: rgba(32,32,32,0.5);
       color: #fff;
     }
-    .watermelon-btn {
-      background: radial-gradient(circle at 60% 40%, #ff7e91 70%, #ff4f5a 100%);
-      color: var(--watermelon-seed);
-      font-size: 2em;
-      padding: 28px 60px;
-      border: 4px solid var(--watermelon-rind);
-      border-radius: 50px 50px 60px 60px / 60px 60px 80px 80px;
-      margin: 30px 0 20px;
+
+    #click-btn {
+      border: none;
+      background: none;
+      padding: 0;
+      margin: 20px auto;
       cursor: pointer;
-      position: relative;
-      box-shadow: 0 8px 24px #ff4f5a44, 0 2px 8px #0002;
-      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-      outline: none;
-      font-family: inherit;
     }
-    .watermelon-btn:active {
-      background: radial-gradient(circle at 50% 60%, #ff4f5a 80%, #ff7e91 100%);
-      box-shadow: 0 2px 6px #ff4f5a66;
+
+    #click-btn img {
+      width: 200px;
+      height: auto;
+      transition: transform 0.1s ease;
+      user-select: none;
+    }
+
+    #click-btn:active img {
       transform: scale(0.97);
     }
-    .seeds-on-btn {
-      position: absolute;
-      left: 50%; top: 50%;
-      transform: translate(-50%,-50%);
-      pointer-events: none;
-    }
-    .seed.small {
-      width: 8px; height: 12px;
-      opacity: 0.7;
-    }
+
     .theme-switcher, .lang-switcher {
       margin-top: 16px;
       font-size: 1.1em;
@@ -98,6 +96,7 @@
       display: inline-block;
       margin-right: 12px;
     }
+
     body.dark .theme-switcher, body.dark .lang-switcher {
       background: #2228;
       color: #fff;
@@ -116,14 +115,12 @@
   </div>
   <div id="coins">Монеты: 0</div>
   <br>
-  <button class="watermelon-btn" id="click-btn" onclick="clickCoin()">
-    Клик!
-    <div class="seeds-on-btn">
-      <span class="seed small" style="top:10px;left:5px;position:absolute;"></span>
-      <span class="seed small" style="top:28px;left:38px;position:absolute;"></span>
-      <span class="seed small" style="top:19px;left:60px;position:absolute;transform:rotate(24deg);"></span>
-    </div>
+
+  <!-- Новая кнопка: изображение арбуза -->
+  <button id="click-btn" onclick="clickCoin()">
+    <img src="https://img.freepik.com/premium-psd/view-ripe-sweet-fruit_37298534.png" alt="Клик!">
   </button>
+
   <br>
   <button class="theme-switcher" id="theme-btn" onclick="toggleTheme()">🌗 Переключить тему</button>
   <button class="lang-switcher" id="lang-btn" onclick="toggleLang()">🇷🇺 Русский</button>
@@ -139,14 +136,12 @@
       ru: {
         title: "🍉 Кликер",
         coins: "Монеты: ",
-        click: "Клик!",
         theme: "🌗 Переключить тему",
         lang: "🇬🇧 English",
       },
       en: {
         title: "🍉 Clicker",
         coins: "Coins: ",
-        click: "Click!",
         theme: "🌗 Switch theme",
         lang: "🇷🇺 Русский",
       }
@@ -155,7 +150,6 @@
     function updateLang() {
       document.getElementById("title").innerText = texts[lang].title;
       document.getElementById("coins").innerText = texts[lang].coins + coins;
-      document.getElementById("click-btn").childNodes[0].textContent = texts[lang].click;
       document.getElementById("theme-btn").innerText = texts[lang].theme;
       document.getElementById("lang-btn").innerText = texts[lang].lang;
     }
@@ -163,26 +157,6 @@
     function clickCoin() {
       coins++;
       document.getElementById("coins").innerText = texts[lang].coins + coins;
-      popSeed();
-    }
-
-    function popSeed() {
-      const btn = document.querySelector('.watermelon-btn');
-      const seed = document.createElement('span');
-      seed.className = 'seed small';
-      seed.style.position = 'absolute';
-      seed.style.left = (40 + Math.random()*40) + 'px';
-      seed.style.top = (15 + Math.random()*30) + 'px';
-      seed.style.opacity = 1;
-      seed.style.transition = 'top 0.8s cubic-bezier(.2,-0.5,.8,0.7), opacity 0.8s';
-      btn.appendChild(seed);
-      setTimeout(() => {
-        seed.style.top = (parseInt(seed.style.top) - 40) + 'px';
-        seed.style.opacity = 0;
-      }, 10);
-      setTimeout(() => {
-        seed.remove();
-      }, 900);
     }
 
     function toggleTheme() {
@@ -194,7 +168,6 @@
       updateLang();
     }
 
-    // Первичная установка
     updateLang();
   </script>
 </body>
