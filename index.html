@@ -46,12 +46,28 @@
 
     .particle {
       position: absolute;
-      font-size: 20px;
       font-weight: bold;
-      color: #00ff88;
       z-index: 3;
       pointer-events: none;
       animation: rise 1s ease-out forwards;
+      color: #00ff88;
+      font-size: 20px;
+    }
+
+    .particle.auto {
+      color: #008844cc; /* темнее зеленого, полупрозрачный */
+      font-size: 18px;
+      font-weight: 900;
+      display: flex;
+      align-items: baseline;
+    }
+    .particle.auto sup {
+      font-size: 10px;
+      margin-left: 2px;
+      position: relative;
+      top: -0.7em;
+      font-weight: 700;
+      color: #004422cc;
     }
 
     @keyframes rise {
@@ -91,6 +107,7 @@
       cursor: pointer;
       box-shadow: 0 0 10px #00ff88;
       transition: transform 0.2s;
+      user-select: none;
     }
 
     #upgrade-btn:hover {
@@ -111,6 +128,7 @@
       border-top: 2px solid #00ff88;
       transition: bottom 0.4s ease;
       overflow-y: auto;
+      user-select: none;
     }
 
     #upgrade-menu.active {
@@ -126,14 +144,15 @@
       font-size: 24px;
       color: #00ffaa;
       cursor: pointer;
+      user-select: none;
     }
 
     #upgrade-menu h2 {
       margin-top: 0;
       color: #00ffaa;
+      user-select: none;
     }
 
-    /* Улучшение */
     .upgrade-item {
       display: flex;
       align-items: center;
@@ -162,12 +181,14 @@
       margin: 0 0 5px 0;
       font-size: 20px;
       color: #00ffaa;
+      user-select: none;
     }
 
     .upgrade-info p {
       margin: 0;
       font-size: 14px;
       color: #a0ffaa;
+      user-select: none;
     }
 
     .upgrade-buy {
@@ -201,7 +222,7 @@
 
   <canvas class="bg"></canvas>
   <div id="counter">Арбузики: 0</div>
-  <img src="click.png" id="clicker" alt="Арбуз" />
+  <img src="assets/click.png" id="clicker" alt="Арбуз" />
   <div id="username">@unknown</div>
   <button id="upgrade-btn">Улучшения</button>
 
@@ -219,11 +240,23 @@
       <button class="upgrade-buy" id="buy-double-click">Купить</button>
     </div>
 
+    <div class="upgrade-item" id="upgrade-auto">
+      <img src="assets/wm-auto.png" alt="Автоматический арбузник" />
+      <div class="upgrade-info">
+        <h3>Автоматический арбузник</h3>
+        <p>Каждую секунду вы получаете +1 арбузик автоматически.</p>
+        <p>Стоимость: 200 арбузиков</p>
+      </div>
+      <button class="upgrade-buy" id="buy-auto">Купить</button>
+    </div>
+
   </div>
 
   <script>
     let count = Number(localStorage.getItem("watermelons") || 0);
     let clickValue = Number(localStorage.getItem("clickValue") || 1);
+    let autoClickerBought = localStorage.getItem("autoClickerBought") === "true";
+    let doubleClickBought = localStorage.getItem("doubleClickBought") === "true";
 
     const counter = document.getElementById("counter");
     const clicker = document.getElementById("clicker");
@@ -231,17 +264,23 @@
     const upgradeMenu = document.getElementById("upgrade-menu");
     const closeBtn = document.getElementById("close-upgrades");
     const buyDoubleClickBtn = document.getElementById("buy-double-click");
+    const buyAutoBtn = document.getElementById("buy-auto");
 
     function updateCounter() {
       counter.textContent = `Арбузики: ${count}`;
     }
 
-    function createParticle(x, y, text) {
+    function createParticle(x, y, text, isAuto=false) {
       const particle = document.createElement("div");
       particle.className = "particle";
+      if(isAuto){
+        particle.classList.add("auto");
+        particle.innerHTML = `${text}<sup>A</sup>`;
+      } else {
+        particle.textContent = text;
+      }
       particle.style.left = x + "px";
       particle.style.top = y + "px";
-      particle.textContent = "+" + text;
       document.body.appendChild(particle);
       setTimeout(() => particle.remove(), 1000);
     }
@@ -250,42 +289,77 @@
       count += clickValue;
       localStorage.setItem("watermelons", count);
       updateCounter();
-      createParticle(e.clientX, e.clientY, clickValue);
+      createParticle(e.clientX, e.clientY, "+" + clickValue);
       checkUpgradesAvailability();
     });
 
     function checkUpgradesAvailability() {
-      if (count >= 100 && !localStorage.getItem("doubleClickBought")) {
-        buyDoubleClickBtn.disabled = false;
-      } else {
-        buyDoubleClickBtn.disabled = true;
-      }
+      buyDoubleClickBtn.disabled = !(count >= 100 && !doubleClickBought);
+      buyAutoBtn.disabled = !(count >= 200 && !autoClickerBought);
     }
 
     buyDoubleClickBtn.addEventListener("click", () => {
-      if (count >= 100 && !localStorage.getItem("doubleClickBought")) {
+      if (count >= 100 && !doubleClickBought) {
         count -= 100;
         localStorage.setItem("watermelons", count);
         clickValue = 2;
         localStorage.setItem("clickValue", clickValue);
+        doubleClickBought = true;
         localStorage.setItem("doubleClickBought", "true");
         updateCounter();
         buyDoubleClickBtn.disabled = true;
         buyDoubleClickBtn.textContent = "Куплено";
+        checkUpgradesAvailability();
       }
     });
 
-    // Инициализация статуса кнопки при загрузке
-    if (localStorage.getItem("doubleClickBought")) {
+    buyAutoBtn.addEventListener("click", () => {
+      if (count >= 200 && !autoClickerBought) {
+        count -= 200;
+        localStorage.setItem("watermelons", count);
+        autoClickerBought = true;
+        localStorage.setItem("autoClickerBought", "true");
+        updateCounter();
+        buyAutoBtn.disabled = true;
+        buyAutoBtn.textContent = "Куплено";
+        startAutoClicker();
+        checkUpgradesAvailability();
+      }
+    });
+
+    // Инициализация статуса кнопок и автокликера при загрузке
+    if (doubleClickBought) {
       buyDoubleClickBtn.disabled = true;
       buyDoubleClickBtn.textContent = "Куплено";
       clickValue = 2;
       localStorage.setItem("clickValue", clickValue);
     } else {
-      checkUpgradesAvailability();
+      buyDoubleClickBtn.disabled = true; // по умолчанию
+    }
+    if (autoClickerBought) {
+      buyAutoBtn.disabled = true;
+      buyAutoBtn.textContent = "Куплено";
+      startAutoClicker();
+    } else {
+      buyAutoBtn.disabled = true; // по умолчанию
     }
 
+    checkUpgradesAvailability();
     updateCounter();
+
+    // Автокликер
+    function startAutoClicker() {
+      setInterval(() => {
+        count += 1;
+        localStorage.setItem("watermelons", count);
+        updateCounter();
+
+        // Частицы авто +1 с буквой A в верхнем правом углу экрана (чтобы не мешать клику)
+        const x = window.innerWidth - 60 + (Math.random()*20-10);
+        const y = 50 + (Math.random()*20-10);
+        createParticle("+" + 1, x, y, true);
+      }, 1000);
+    }
 
     // --- background ---
     const canvas = document.querySelector(".bg");
@@ -294,7 +368,7 @@
     let H = canvas.height = window.innerHeight;
 
     const bg = new Image();
-    bg.src = "bg.png";
+    bg.src = "assets/bg.png";
 
     const arbs = [];
     const maxArbs = 50;
