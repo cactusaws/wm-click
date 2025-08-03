@@ -17,20 +17,11 @@
       user-select: text !important;
     }
     #debug {
-      position:fixed;bottom:0;left:0;
-      z-index:9999;color:#ff0;background:#000a;
-      padding:4px 12px;font-size:12px;
-      min-height: 22px;
-      width: 100vw;
-      display: none;
-      white-space: pre-line;
-      font-family: monospace;
-      border-top: 1px solid #444;
-      box-sizing: border-box;
-      opacity: .97;
-      max-height: 120px;
-      overflow-y: auto;
-      pointer-events: none;
+      position:fixed;bottom:0;left:0;z-index:9999;color:#ff0;background:#000a;
+      padding:4px 12px;font-size:12px;min-height:22px;width:100vw;display:none;
+      white-space:pre-line;font-family:monospace;border-top:1px solid #444;
+      box-sizing:border-box;opacity:.97;max-height:120px;overflow-y:auto;
+      pointer-events:none;
     }
     body.debug-on #debug { display: block; }
     *:not(#debug):not(#settings-menu):not(#settings-menu *), *:not(#debug):not(#settings-menu):not(#settings-menu *) * {
@@ -59,7 +50,7 @@
       user-select: none;
     }
     .particle.auto {
-      color: #50ffb7 !important; /* светлее и с зелёно-голубым оттенком */
+      color: #50ffb7 !important; /* светлее */
       font-size: 18px;
       font-weight: 900;
       display: flex;
@@ -104,7 +95,7 @@
     #settings-btn:hover { background: #33ffd7; }
     #upgrade-btn:hover { transform: scale(1.05); }
     #upgrade-menu {
-      position: absolute; bottom: -100%; left: 0; width: 100%; height: 380px;
+      position: absolute; bottom: -100%; left: 0; width: 100%; height: 480px;
       background: rgba(0, 0, 0, 0.9); color: #00ff88; z-index: 5;
       padding: 20px; box-sizing: border-box; border-top: 2px solid #00ff88;
       transition: bottom 0.4s ease; overflow-y: auto; user-select: none;
@@ -166,6 +157,14 @@
     .settings-row {
       margin-bottom: 16px; display: flex; align-items: center;
       user-select: none;
+    }
+    .slider-num {
+      padding: 0 10px;
+      font-size: 16px;
+      color: #a0ffaa;
+      min-width: 30px;
+      display: inline-block;
+      text-align: center;
     }
     .switch {
       position: relative; display: inline-block; width: 46px; height: 25px; margin-right: 10px;
@@ -232,6 +231,25 @@
       box-shadow: 0 0 8px #00ff88;
       margin-top: 12px;
     }
+    .golden-arbuz {
+      position: absolute;
+      z-index: 2;
+      cursor: pointer;
+      width: 48px;
+      height: 48px;
+      filter: brightness(1.7) hue-rotate(50deg) drop-shadow(0 0 10px #ffd700);
+      animation: golden-pulse 1.2s infinite alternate cubic-bezier(.4,0,.2,1);
+      pointer-events: auto;
+      transition: transform 0.15s;
+    }
+    .golden-arbuz:active {
+      transform: scale(1.14);
+      filter: brightness(2.2) hue-rotate(90deg) drop-shadow(0 0 20px #ffc500);
+    }
+    @keyframes golden-pulse {
+      from { filter: brightness(1.2) hue-rotate(35deg) drop-shadow(0 0 4px #ffe066);}
+      to   { filter: brightness(1.7) hue-rotate(60deg) drop-shadow(0 0 15px #ffd700);}
+    }
   </style>
 </head>
 <body oncontextmenu="return false;">
@@ -271,6 +289,24 @@
       </div>
       <button class="upgrade-buy" id="buy-farm">Купить</button>
     </div>
+    <div class="upgrade-item" id="upgrade-double-power">
+      <img src="assets/wm-double.png" alt="Арбузное удвоение" />
+      <div class="upgrade-info">
+        <h3>Арбузное удвоение</h3>
+        <p>Временно удваивает прибыль за клик! Если у тебя было 6 за клик — станет 12, но если купишь ещё апгрейд на +4, будет 10, а не 20.</p>
+        <p>Стоимость: 1000 арбузиков</p>
+      </div>
+      <button class="upgrade-buy" id="buy-double-power">Купить</button>
+    </div>
+    <div class="upgrade-item" id="upgrade-magnet">
+      <img src="assets/wm-magnet.png" alt="Арбузный магнит" />
+      <div class="upgrade-info">
+        <h3>Арбузный магнит</h3>
+        <p>Появляются золотые арбузы! Кликни по ним — +10 арбузиков. 25% шанс спавна на фоне.</p>
+        <p>Стоимость: 1250 арбузиков</p>
+      </div>
+      <button class="upgrade-buy" id="buy-magnet">Купить</button>
+    </div>
   </div>
   <div id="offline-banner">
     <div id="offline-msg" style="font-size:22px; margin-bottom:18px;"></div>
@@ -300,11 +336,15 @@
       </label>
       <label for="toggle-random-bg">Крутой случайный фон</label>
     </div>
+    <div class="settings-row">
+      <label for="bg-arbuz-count">Арбузов на фоне:</label>
+      <input type="range" min="0" max="100" value="50" id="bg-arbuz-count" style="margin-left:12px;">
+      <span class="slider-num" id="bg-arbuz-count-val">50</span>
+    </div>
     <div class="fun-fact" id="fun-fact" style="display:none"></div>
   </div>
   <div id="debug"></div>
   <script>
-    // --- Функция дебага c историей ---
     let debugLog = [];
     function debug(msg) {
       if (window.debugEnabled) {
@@ -349,13 +389,18 @@
     window.addEventListener('DOMContentLoaded', function() {
       // Основные переменные
       let count = Number(localStorage.getItem("watermelons") || 0);
-      let clickValue = Number(localStorage.getItem("clickValue") || 1);
+      let clickValueBase = Number(localStorage.getItem("clickValueBase") || 1); // только база!
+      let clickValue = clickValueBase;
+      let doublePower = localStorage.getItem("doublePower") === "true"; // Арбузное удвоение (x2)
       let autoClickerBought = localStorage.getItem("autoClickerBought") === "true";
       let doubleClickBought = localStorage.getItem("doubleClickBought") === "true";
       let farmBought = localStorage.getItem("farmBought") === "true";
+      let magnetBought = localStorage.getItem("magnetBought") === "true";
       let lastClickX = null;
       let lastClickY = null;
       let autoInterval = null;
+      let goldenArbuz = null;
+      let bgArbuzCount = Number(localStorage.getItem("bgArbuzCount") || 50);
 
       // Элементы DOM
       const counter = document.getElementById("counter");
@@ -367,6 +412,8 @@
       const buyDoubleClickBtn = document.getElementById("buy-double-click");
       const buyAutoBtn = document.getElementById("buy-auto");
       const buyFarmBtn = document.getElementById("buy-farm");
+      const buyDoublePowerBtn = document.getElementById("buy-double-power");
+      const buyMagnetBtn = document.getElementById("buy-magnet");
       const debugDiv = document.getElementById('debug');
       const offlineBanner = document.getElementById("offline-banner");
       const offlineMsg = document.getElementById("offline-msg");
@@ -377,8 +424,9 @@
       const toggleFunFact = document.getElementById("toggle-funfact");
       const toggleRandomBg = document.getElementById("toggle-random-bg");
       const funFactDiv = document.getElementById("fun-fact");
+      const bgArbuzSlider = document.getElementById("bg-arbuz-count");
+      const bgArbuzVal = document.getElementById("bg-arbuz-count-val");
 
-      // Копировать можно только debug/settings
       document.body.addEventListener('copy', function(e) {
         if (!window.debugEnabled
           && !settingsMenu.classList.contains("active")
@@ -386,15 +434,27 @@
         ) e.preventDefault();
       });
 
+      function updateClickValue() {
+        let val = 1;
+        if (doubleClickBought) val = 2;
+        if (farmBought) val = Math.floor(val * 1.5);
+        val += (clickValueBase - 1); // + всё, что было накоплено
+        // doublePower применяется последним!
+        clickValue = doublePower ? val * 2 : val;
+      }
+
       function updateCounter() {
         counter.textContent = `Арбузики: ${count}`;
       }
       function saveAll() {
         localStorage.setItem("watermelons", count);
-        localStorage.setItem("clickValue", clickValue);
+        localStorage.setItem("clickValueBase", clickValueBase);
         localStorage.setItem("autoClickerBought", autoClickerBought ? "true" : "");
         localStorage.setItem("doubleClickBought", doubleClickBought ? "true" : "");
         localStorage.setItem("farmBought", farmBought ? "true" : "");
+        localStorage.setItem("magnetBought", magnetBought ? "true" : "");
+        localStorage.setItem("doublePower", doublePower ? "true" : "");
+        localStorage.setItem("bgArbuzCount", bgArbuzCount);
         localStorage.setItem("lastPlayed", Date.now());
       }
       function createParticle(x, y, text, isAuto = false) {
@@ -412,6 +472,7 @@
         setTimeout(() => particle.remove(), 1000);
       }
       clicker.addEventListener("click", (e) => {
+        updateClickValue();
         count += clickValue;
         updateCounter();
         saveAll();
@@ -426,12 +487,14 @@
         buyDoubleClickBtn.disabled = !(count >= 100 && !doubleClickBought);
         buyAutoBtn.disabled = !(count >= 200 && !autoClickerBought);
         buyFarmBtn.disabled = !(count >= 500 && !farmBought);
+        buyDoublePowerBtn.disabled = !(count >= 1000 && !doublePower);
+        buyMagnetBtn.disabled = !(count >= 1250 && !magnetBought);
       }
       buyDoubleClickBtn.addEventListener("click", () => {
         if (count >= 100 && !doubleClickBought) {
           count -= 100;
-          clickValue = farmBought ? Math.floor(2*1.5) : 2;
           doubleClickBought = true;
+          updateClickValue();
           updateCounter();
           saveAll();
           buyDoubleClickBtn.disabled = true;
@@ -444,6 +507,7 @@
         if (count >= 200 && !autoClickerBought) {
           count -= 200;
           autoClickerBought = true;
+          updateClickValue();
           updateCounter();
           saveAll();
           buyAutoBtn.disabled = true;
@@ -457,7 +521,7 @@
         if (count >= 500 && !farmBought) {
           count -= 500;
           farmBought = true;
-          clickValue = doubleClickBought ? Math.floor(2*1.5) : Math.floor(1*1.5);
+          updateClickValue();
           updateCounter();
           saveAll();
           buyFarmBtn.disabled = true;
@@ -466,34 +530,62 @@
           checkUpgradesAvailability();
         }
       });
+      buyDoublePowerBtn.addEventListener("click", () => {
+        if (count >= 1000 && !doublePower) {
+          count -= 1000;
+          doublePower = true;
+          updateClickValue();
+          updateCounter();
+          saveAll();
+          buyDoublePowerBtn.disabled = true;
+          buyDoublePowerBtn.textContent = "Куплено";
+          debug("Улучшение куплено: Арбузное удвоение. Клик теперь +" + clickValue + ". Новые апгрейды будут добавлять к базовой прибыли, а не к удвоенной.");
+          checkUpgradesAvailability();
+        }
+      });
+      buyMagnetBtn.addEventListener("click", () => {
+        if (count >= 1250 && !magnetBought) {
+          count -= 1250;
+          magnetBought = true;
+          updateClickValue();
+          updateCounter();
+          saveAll();
+          buyMagnetBtn.disabled = true;
+          buyMagnetBtn.textContent = "Куплено";
+          debug("Улучшение куплено: Арбузный магнит. Теперь могут появляться золотые арбузы на фоне!");
+          checkUpgradesAvailability();
+        }
+      });
 
       function initUpgrades() {
         if (doubleClickBought) {
           buyDoubleClickBtn.disabled = true;
           buyDoubleClickBtn.textContent = "Куплено";
-          clickValue = farmBought ? Math.floor(2*1.5) : 2;
-        } else {
-          buyDoubleClickBtn.disabled = true;
-        }
+        } else { buyDoubleClickBtn.disabled = true; }
         if (autoClickerBought) {
           buyAutoBtn.disabled = true;
           buyAutoBtn.textContent = "Куплено";
           startAutoClicker();
-        } else {
-          buyAutoBtn.disabled = true;
-        }
+        } else { buyAutoBtn.disabled = true; }
         if (farmBought) {
           buyFarmBtn.disabled = true;
           buyFarmBtn.textContent = "Куплено";
-          clickValue = doubleClickBought ? Math.floor(2*1.5) : Math.floor(1*1.5);
-        } else {
-          buyFarmBtn.disabled = true;
-        }
+        } else { buyFarmBtn.disabled = true; }
+        if (doublePower) {
+          buyDoublePowerBtn.disabled = true;
+          buyDoublePowerBtn.textContent = "Куплено";
+        } else { buyDoublePowerBtn.disabled = true; }
+        if (magnetBought) {
+          buyMagnetBtn.disabled = true;
+          buyMagnetBtn.textContent = "Куплено";
+        } else { buyMagnetBtn.disabled = true; }
+        updateClickValue();
       }
 
       function startAutoClicker() {
         if (autoInterval) return;
         autoInterval = setInterval(() => {
+          updateClickValue();
           count += clickValue;
           updateCounter();
           saveAll();
@@ -523,6 +615,7 @@
         let offlineSecs = Math.floor((now - lastPlayed) / 1000);
         offlineSecs = Math.min(offlineSecs, 600); // максимум 10 минут
         let offlineReward = 0;
+        updateClickValue();
         if (autoClickerBought && offlineSecs >= 10) {
           offlineReward = offlineSecs * clickValue;
           offlineBanner.style.display = "";
@@ -588,6 +681,15 @@
           debug("Фон сброшен на стандартный");
         }
       });
+      bgArbuzSlider.value = bgArbuzCount;
+      bgArbuzVal.textContent = bgArbuzCount;
+      bgArbuzSlider.addEventListener("input", function() {
+        bgArbuzCount = +bgArbuzSlider.value;
+        bgArbuzVal.textContent = bgArbuzCount;
+        localStorage.setItem("bgArbuzCount", bgArbuzCount);
+        debug("Изменено количество арбузов на фоне: " + bgArbuzCount);
+      });
+
       // Инициализация опций
       if (localStorage.getItem("debugEnabled")==="1") {
         toggleDebug.checked = true;
@@ -604,6 +706,7 @@
 
       // Улучшения и интерфейс
       checkUpgradesAvailability();
+      updateClickValue();
       updateCounter();
       initUpgrades();
       showOfflineIncome();
@@ -612,26 +715,61 @@
         localStorage.setItem("lastPlayed", Date.now());
       });
 
-      // Фоновые арбузы
+      // Фоновые арбузы и золотые арбузы
       const canvas = document.querySelector(".bg");
       const ctx = canvas.getContext("2d");
       let W = canvas.width = window.innerWidth;
       let H = canvas.height = window.innerHeight;
       const bg = new Image();
       bg.src = "assets/bg.png";
-      const arbs = [];
-      const maxArbs = 50;
-      for (let i = 0; i < maxArbs; i++) {
-        arbs.push({
-          x: Math.random() * W,
-          y: Math.random() * H,
-          size: 40 + Math.random() * 50,
-          speedX: -1 + Math.random() * 2,
-          speedY: -1 + Math.random() * 2,
-          opacity: 0.3 + Math.random() * 0.7,
-          angle: Math.random() * Math.PI * 2,
-          rotateSpeed: 0.005 + Math.random() * 0.01
-        });
+      let arbs = [];
+      let goldenArbuzActive = false;
+      function spawnArbuzes() {
+        arbs = [];
+        for (let i = 0; i < bgArbuzCount; i++) {
+          arbs.push({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            size: 40 + Math.random() * 50,
+            speedX: -1 + Math.random() * 2,
+            speedY: -1 + Math.random() * 2,
+            opacity: 0.3 + Math.random() * 0.7,
+            angle: Math.random() * Math.PI * 2,
+            rotateSpeed: 0.005 + Math.random() * 0.01
+          });
+        }
+      }
+      // --- Golden Arbuz ---
+      function spawnGoldenArbuz() {
+        if (!magnetBought || goldenArbuzActive) return;
+        if (Math.random() < 0.25) { // 25% шанс
+          let x = Math.random() * (window.innerWidth - 60) + 20;
+          let y = Math.random() * (window.innerHeight - 100) + 40;
+          goldenArbuz = document.createElement('img');
+          goldenArbuz.src = "assets/bg.png";
+          goldenArbuz.className = "golden-arbuz";
+          goldenArbuz.style.left = x + "px";
+          goldenArbuz.style.top = y + "px";
+          goldenArbuz.title = "+10 арбузиков!";
+          goldenArbuzActive = true;
+          document.body.appendChild(goldenArbuz);
+          goldenArbuz.onclick = function() {
+            count += 10;
+            updateCounter();
+            saveAll();
+            createParticle(x + 20, y, "+10");
+            debug("Пойман золотой арбуз! +10 арбузиков.");
+            goldenArbuz.remove();
+            goldenArbuzActive = false;
+          }
+          setTimeout(() => {
+            if (goldenArbuzActive) {
+              goldenArbuz.remove();
+              goldenArbuzActive = false;
+              debug("Золотой арбуз исчез.");
+            }
+          }, 3000);
+        }
       }
       function draw() {
         ctx.clearRect(0, 0, W, H);
@@ -650,13 +788,19 @@
           if (a.x > W + 100) a.x = -100;
           if (a.y > H + 100) a.y = -100;
         }
+        if (magnetBought) spawnGoldenArbuz();
         requestAnimationFrame(draw);
       }
-      bg.onload = draw;
+      bg.onload = function() {
+        spawnArbuzes();
+        draw();
+      };
       window.addEventListener('resize', () => {
         W = canvas.width = window.innerWidth;
         H = canvas.height = window.innerHeight;
+        spawnArbuzes();
       });
+      bgArbuzSlider.addEventListener("input", spawnArbuzes);
 
       // Telegram username
       if (window.Telegram && Telegram.WebApp) {
@@ -676,7 +820,6 @@
         upgradeMenu.classList.remove("active");
         debug("Закрыто меню улучшений");
       });
-
     });
   </script>
 </body>
