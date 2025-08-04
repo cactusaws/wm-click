@@ -2,261 +2,312 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Кликер Арбузиков</title>
+  <title>Арбузный Кликер</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: radial-gradient(ellipse at center, #014421 0%, #000000 100%);
-      height: 100vh;
-      font-family: 'Arial', sans-serif;
+    :root {
+      --main: #13ff7c;
+      --main2: #43ffd6;
+      --main3: #eaff00;
+      --main4: #fff;
+      --dark: #1a1a2a;
+      --dark2: #161624;
+      --bg1: #0b1822;
+      --bg2: #141a28;
+      --glow: 0 0 28px #13ff7c, 0 0 44px #43ffd6, 0 0 7px #eaff00;
+      --glow-gold: 0 0 32px #ffe066, 0 0 80px #fffa95;
+      --glow-btn: 0 0 24px #43ffd6, 0 0 44px #eaff00;
+      --radius: 20px;
+    }
+    html, body {margin:0;padding:0;height:100vh;overflow:hidden;}
+    body {
+      background: linear-gradient(130deg, var(--bg1) 0%, var(--bg2) 100%);
+      min-height: 100vh;
       user-select: none;
+      font-family: 'Segoe UI', 'Arial', 'Verdana', sans-serif;
+      color: var(--main4);
     }
-    body.debug-on, #debug, #settings-menu, #settings-menu * {
-      user-select: text !important;
+    /* Welcome */
+    #welcome-time {
+      position: absolute; top: 18px; right: 32px; z-index: 10;
+      font-size: 30px; font-weight: 900; letter-spacing: 2.5px;
+      color: var(--main3);
+      background: linear-gradient(90deg,#232e58 40%,#1a3c2f 100%);
+      border-radius: 0 26px 0 26px;
+      box-shadow: var(--glow), 0 0 12px #fffbe799;
+      text-shadow: 0 0 18px #eaff00, 0 2px 16px #00ffc6, 0 0 2px #fff;
+      padding: 12px 36px 8px 36px;
+      min-width: 200px;
+      min-height: 38px;
+      user-select: none;
+      pointer-events: none;
+      transition: background .8s, box-shadow .7s;
+      animation: welcome-glow 2.7s infinite alternate;
     }
-    #debug {
-      position:fixed;bottom:0;left:0;z-index:9999;color:#ff0;background:#000a;
-      padding:4px 12px;font-size:12px;min-height:22px;width:100vw;display:none;
-      white-space:pre-line;font-family:monospace;border-top:1px solid #444;
-      box-sizing:border-box;opacity:.97;max-height:120px;overflow-y:auto;
-      pointer-events:none;
+    @keyframes welcome-glow {
+      0% { box-shadow: var(--glow), 0 0 12px #fffbe799;}
+      100% { box-shadow: 0 0 90px #fff700, 0 0 20px #00ffc6, 0 0 60px #eaff00; }
     }
-    body.debug-on #debug { display: block; }
-    *:not(#debug):not(#settings-menu):not(#settings-menu *), *:not(#debug):not(#settings-menu):not(#settings-menu *) * {
-      user-select: none !important;
-    }
-    canvas.bg { position: absolute; z-index: 0; }
-    #clicker {
-      position: absolute; left: 50%; top: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 2; cursor: pointer; width: 200px;
-    }
+    /* Счетчик */
     #counter {
-      position: absolute; top: 20px; left: 20px;
-      color: #00ff88; font-size: 24px; font-weight: bold; z-index: 3;
-      text-shadow: 0 0 5px #00ff88;
-      pointer-events: none;
+      position: absolute; top: 32px; left: 42px; z-index: 4;
+      font-size: 30px; font-weight: 900; letter-spacing:2px;
+      background: linear-gradient(90deg,#13ff7c33 40%,#eaff0033 100%);
+      border-radius: 0 18px 18px 0;
+      color: #fff;
+      text-shadow: 0 0 18px #13ff7c, 0 2px 12px #eaff00;
+      box-shadow: 0 0 24px #13ff7c80;
+      padding: 14px 38px 12px 28px;
+      user-select: none;
+      border-left: 5px solid #eaff00;
+      border-top: 2px solid #43ffd6;
     }
-    .particle {
-      position: absolute;
-      font-weight: bold;
-      z-index: 3;
-      pointer-events: none;
-      animation: rise 1s ease-out forwards;
-      color: #00ff88;
-      font-size: 20px;
+    /* Кликер */
+    #clicker {
+      position: absolute; left: 50%; top: 53%; z-index: 3;
+      transform: translate(-50%, -50%) scale(1);
+      width: 230px;
+      filter: drop-shadow(0 0 40px #13ff7c) drop-shadow(0 0 80px #eaff00cc);
+      cursor: pointer;
+      transition: transform .18s cubic-bezier(.7,0,0,1), filter .22s;
+      animation: clicker-float 2.5s infinite alternate;
       user-select: none;
     }
-    .particle.auto {
-      color: #50ffb7 !important; /* светлее */
-      font-size: 18px;
-      font-weight: 900;
-      display: flex;
-      align-items: baseline;
-      text-shadow: 0 0 8px #aaffee;
+    @keyframes clicker-float {
+      from {transform: translate(-50%,-50%) scale(1);}
+      to {transform: translate(-50%,-52%) scale(1.04);}
     }
-    .particle.auto sup {
-      font-size: 10px;
-      margin-left: 2px;
-      position: relative;
-      top: -0.7em;
-      font-weight: 700;
-      color: #8efff4;
+    #clicker:active {
+      transform: translate(-50%, -50%) scale(1.12) rotate(-2deg);
+      filter: drop-shadow(0 0 60px #fffbe7) drop-shadow(0 0 110px #13ff7c);
     }
-    @keyframes rise {
-      0% { opacity: 1; transform: translateY(0px) scale(1);}
-      100% { opacity: 0; transform: translateY(-50px) scale(1.5);}
-    }
-    #username {
-      position: absolute; top: 20px; right: 20px;
-      color: #00ffaa; font-size: 16px; z-index: 3;
-      text-shadow: 0 0 4px #00ffaa; pointer-events: none;
-    }
-    #upgrade-btn {
-      position: absolute; bottom: 20px; left: 20px; z-index: 4;
-      background: #00ff88; color: #000; border: none;
-      padding: 10px 16px; font-size: 16px; font-weight: bold;
-      border-radius: 8px; cursor: pointer;
-      box-shadow: 0 0 10px #00ff88;
-      transition: transform 0.2s;
+    /* Кнопки */
+    #upgrade-btn, #settings-btn {
+      position: absolute; bottom: 22px; z-index: 5;
+      font-size: 20px; font-weight: bold; border-radius: var(--radius);
+      border: none; outline: none;
+      padding: 13px 36px; margin: 0 8px;
+      background: linear-gradient(100deg,#1a3c2f 10%,#232e58 100%);
+      color: #eaff00; text-shadow: 0 2px 8px #fff, 0 0 4px #00ffc6;
+      box-shadow: var(--glow-btn);
+      cursor: pointer;
+      transition: background .18s, box-shadow .14s, transform .13s;
+      filter: brightness(1.15);
       user-select: none;
+      animation: btn-glow 2.2s infinite alternate;
     }
-    #settings-btn {
-      position: absolute; bottom: 20px; right: 20px; z-index: 4;
-      background: #00ffaa; color: #002e00; border: none;
-      padding: 10px 16px; font-size: 16px; font-weight: bold;
-      border-radius: 8px; cursor: pointer;
-      box-shadow: 0 0 10px #00ffaa;
-      transition: transform 0.2s;
-      user-select: none;
+    @keyframes btn-glow {
+      0% {box-shadow: var(--glow-btn);}
+      100% {box-shadow: 0 0 38px #eaff00cc, 0 0 22px #13ff7c;}
     }
-    #settings-btn:hover { background: #33ffd7; }
-    #upgrade-btn:hover { transform: scale(1.05); }
+    #upgrade-btn { left: 35px; }
+    #settings-btn { right: 35px;}
+    #upgrade-btn:hover, #settings-btn:hover {
+      filter: brightness(1.17) saturate(1.14);
+      transform: scale(1.09);
+      box-shadow: 0 0 56px #13ff7c, 0 0 54px #eaff00;
+      background: linear-gradient(100deg,#2e8460 10%,#3d4699 100%);
+    }
+    /* Меню улучшений */
     #upgrade-menu {
-      position: absolute; bottom: -100%; left: 0; width: 100%; height: 480px;
-      background: rgba(0, 0, 0, 0.9); color: #00ff88; z-index: 5;
-      padding: 20px; box-sizing: border-box; border-top: 2px solid #00ff88;
-      transition: bottom 0.4s ease; overflow-y: auto; user-select: none;
+      position: absolute; bottom: -100%; left: 0; width: 100%; height: 470px;
+      background: linear-gradient(120deg,#1a1a2aee 10%,#0b1822ee 100%);
+      color: #fffbe7; z-index: 8; padding: 30px 30px 20px 30px;
+      box-sizing: border-box; border-top: 3px solid #13ff7c;
+      transition: bottom 0.48s cubic-bezier(.7,0,.2,1);
+      overflow-y: auto; user-select: none;
+      box-shadow: 0 0 54px #43ffd688;
+      border-radius: 32px 32px 0 0;
     }
     #upgrade-menu.active { bottom: 0; }
     #close-upgrades {
-      position: absolute; top: 10px; right: 20px; background: transparent;
-      border: none; font-size: 24px; color: #00ffaa; cursor: pointer;
+      position: absolute; top: 10px; right: 30px; background: transparent;
+      border: none; font-size: 32px; color: #eaff00; cursor: pointer;
       user-select: none;
+      text-shadow: 0 0 8px #eaff00, 0 0 12px #13ff7c;
+      transition: color .18s;
     }
+    #close-upgrades:hover { color: #13ff7c; }
     #upgrade-menu h2 {
-      margin-top: 0; color: #00ffaa; user-select: none;
+      margin-top: 0; color: #eaff00; font-size: 29px;
+      font-weight: 900; user-select: none; padding-left: 6px;
+      text-shadow: 0 0 8px #eaff00, 0 0 18px #13ff7c;
     }
     .upgrade-item {
-      display: flex; align-items: center; margin-bottom: 16px;
-      background: #002e00aa; padding: 10px; border-radius: 10px;
-      box-shadow: 0 0 8px #00ff88aa; user-select: none;
+      display: flex; align-items: center; margin-bottom: 22px;
+      background: linear-gradient(110deg,#232e58 58%,#1a3c2f 100%);
+      padding: 13px 18px; border-radius: 18px;
+      box-shadow: 0 0 18px #13ff7c77, 0 0 8px #eaff0055;
+      border: 2px solid #13ff7c88;
+      min-height: 74px;
+      user-select: none;
+      transition: box-shadow .18s, border-color .17s;
     }
     .upgrade-item img {
-      width: 48px; height: 48px; margin-right: 15px; border-radius: 8px;
-      box-shadow: 0 0 5px #00ff88; user-select: none; pointer-events: none;
+      width: 55px; height: 55px; margin-right: 19px; border-radius: 14px;
+      box-shadow: 0 0 16px #13ff7c88; user-select: none; pointer-events: none;
     }
     .upgrade-info { flex-grow: 1; }
     .upgrade-info h3 {
-      margin: 0 0 5px 0; font-size: 20px; color: #00ffaa; user-select: none;
+      margin: 0 0 5px 0; font-size: 22px; color: #eaff00; font-weight: 900; user-select: none;
+      text-shadow: 0 0 8px #eaff00, 0 0 18px #13ff7c;
     }
     .upgrade-info p {
-      margin: 0; font-size: 14px; color: #a0ffaa; user-select: none;
+      margin: 0; font-size: 15px; color: #f0ffd7; user-select: none; text-shadow: 0 0 5px #13ff7c55;
     }
     .upgrade-buy {
-      background: #00ff88; border: none; padding: 8px 12px;
-      font-weight: bold; font-size: 14px; border-radius: 6px;
-      cursor: pointer; color: #000; box-shadow: 0 0 5px #00ff88;
-      user-select: none; transition: background-color 0.2s;
+      background: linear-gradient(120deg, #13ff7c 40%, #eaff00 100%);
+      border: none; padding: 10px 18px;
+      font-weight: bold; font-size: 17px; border-radius: 9px;
+      cursor: pointer; color: #293d2d; box-shadow: 0 0 8px #eaff00;
+      user-select: none; transition: background .13s, box-shadow .13s;
     }
     .upgrade-buy:disabled {
-      background: #005500; cursor: default; box-shadow: none; color: #004400;
+      background: #232e58; color: #eaff0044;
+      cursor: default; box-shadow: none; border: 1px solid #eaff0033;
     }
-    .upgrade-buy:hover:not(:disabled) { background-color: #33ff99; }
+    .upgrade-buy:hover:not(:disabled) {
+      background: linear-gradient(120deg, #eaff00 40%, #13ff7c 100%);
+      color: #1c1700;
+      box-shadow: 0 0 20px #eaff00, 0 0 8px #13ff7c;
+    }
+    /* Настройки */
     #settings-menu {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%,-50%);
-      min-width: 280px; background: #022e22f2; color: #00ffaa; z-index: 20;
-      border-radius: 18px; box-shadow: 0 0 30px #00ff88, 0 0 2px #000;
-      padding: 24px 28px 18px 28px;
+      position: absolute; top: 49%; left: 50%; transform: translate(-50%,-50%);
+      min-width: 275px; background: #232e58f7; color: #eaff00; z-index: 20;
+      border-radius: 22px; box-shadow: 0 0 34px #13ff7c, 0 0 4px #eaff00;
+      padding: 28px 33px 24px 33px;
       display: none; flex-direction: column; align-items: flex-start;
-      font-size: 17px; font-family: Arial,sans-serif;
-      user-select: text !important;
+      font-size: 18px; font-family: Arial,sans-serif; user-select: text !important;
+      animation: settings-fade 0.5s;
     }
+    @keyframes settings-fade { from { opacity:0; transform:scale(0.92);} to {opacity:1; transform:scale(1);} }
     #settings-menu.active { display: flex; }
     #close-settings {
-      position: absolute; top: 8px; right: 18px;
-      background: transparent; border: none; font-size: 28px;
-      color: #00ffaa; cursor: pointer; user-select: none;
+      position: absolute; top: 10px; right: 25px;
+      background: transparent; border: none; font-size: 34px;
+      color: #eaff00; cursor: pointer; user-select: none;
+      text-shadow: 0 0 10px #eaff00, 0 0 18px #13ff7c;
+      transition: color .16s;
     }
+    #close-settings:hover { color: #13ff7c; }
     .settings-title {
-      margin-top: 0; color: #00ffaa; font-size: 22px; user-select: none;
+      margin-top: 0; color: #eaff00; font-size: 25px; font-weight:900;
+      user-select: none; text-shadow: 0 0 8px #eaff00, 0 0 16px #13ff7c;
     }
     .settings-row {
-      margin-bottom: 16px; display: flex; align-items: center;
+      margin-bottom: 18px; display: flex; align-items: center;
       user-select: none;
     }
     .slider-num {
-      padding: 0 10px;
-      font-size: 16px;
-      color: #a0ffaa;
-      min-width: 30px;
-      display: inline-block;
-      text-align: center;
+      padding: 0 10px; font-size: 18px;
+      color: #13ff7c; min-width: 32px; display: inline-block; text-align: center;
+      font-weight: bold; text-shadow: 0 0 3px #eaff00;
     }
     .switch {
-      position: relative; display: inline-block; width: 46px; height: 25px; margin-right: 10px;
+      position: relative; display: inline-block; width: 48px; height: 26px; margin-right: 12px;
     }
     .switch input {display:none;}
     .slider {
       position: absolute;
       cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: #006644;
+      background: #293d2d;
       border-radius: 25px;
       transition: .3s;
+      box-shadow: 0 0 7px #13ff7c88;
     }
     .slider:before {
       position: absolute;
       content: "";
-      height: 19px;
-      width: 19px;
-      left: 3px;
-      bottom: 3px;
+      height: 20px; width: 20px; left: 3px; bottom: 3px;
       background: #fff;
       border-radius: 50%;
       transition: .3s;
-      box-shadow: 0 0 5px #00ff88cc;
+      box-shadow: 0 0 5px #13ff7c99;
     }
     input:checked + .slider {
-      background: #00ffaa;
+      background: linear-gradient(90deg,#13ff7c,#eaff00 90%);
+      box-shadow: 0 0 16px #13ff7c;
     }
     input:checked + .slider:before {
-      transform: translateX(21px);
-      background: #00ff88;
+      transform: translateX(22px);
+      background: #eaff00;
     }
     .fun-fact {
-      margin: 0 0 8px 0;
-      font-size: 14px;
-      color: #fffc7f;
-      font-style: italic;
-      background: #01442188;
-      border-radius: 7px;
-      padding: 4px 7px 2px 7px;
-      user-select: text;
+      margin: 8px 0 0 0; font-size: 15px;
+      color: #fffbe7; font-style: italic;
+      background: #232e5866; border-radius: 7px;
+      padding: 6px 10px 5px 10px; user-select: text;
+      box-shadow: 0 0 8px #13ff7c;
+      text-shadow: 0 0 5px #eaff00;
     }
+    /* Оффлайн доход */
     #offline-banner {
-      display: none;
-      position: fixed; left: 50%; top: 20%;
-      transform: translate(-50%,0);
-      z-index: 1000;
-      background: rgba(0,0,0,0.95);
-      color: #00ffaa;
-      padding: 32px 40px;
-      border-radius: 16px;
-      box-shadow: 0 0 30px #00ff88;
-      text-align: center;
+      display: none; position: fixed; left: 50%; top: 20%;
+      transform: translate(-50%,0); z-index: 1000;
+      background: linear-gradient(120deg,#232e58 10%,#1a3c2f 100%);
+      color: #eaff00; padding: 36px 46px 34px 46px;
+      border-radius: 28px; box-shadow: 0 0 42px #eaff00, 0 0 64px #13ff7c;
+      text-align: center; font-size: 23px; font-weight: 900;
+      border: 2px solid #13ff7c;
+      animation: banner-pop .7s;
     }
+    @keyframes banner-pop { from{opacity:0;transform:scale(0.92) translate(-50%,0);} to{opacity:1;transform:scale(1) translate(-50%,0);} }
     #offline-banner button {
-      background: #00ff88;
-      color: #000;
-      border: 0;
-      font-size: 19px;
-      padding: 10px 24px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 0 8px #00ff88;
-      margin-top: 12px;
+      background: linear-gradient(90deg, #eaff00 40%, #13ff7c 100%);
+      color: #1a3c2f;
+      border: 0; font-size: 20px; padding: 12px 34px; border-radius: 12px;
+      font-weight: bold; cursor: pointer; box-shadow: 0 0 12px #eaff00;
+      margin-top: 18px; transition: background .18s;
+    }
+    #offline-banner button:hover {
+      background: linear-gradient(90deg, #13ff7c 40%, #eaff00 100%);
+      color: #232e58;
+      box-shadow: 0 0 18px #13ff7c;
+    }
+    .particle {
+      text-shadow: 0 0 22px #13ff7c, 0 0 10px #eaff00, 0 0 6px #fff;
+      animation-timing-function: cubic-bezier(.33,.7,.41,1.3);
+    }
+    .particle.auto {
+      color: #fffbe7 !important;
+      text-shadow: 0 0 24px #eaff00, 0 0 18px #13ff7c, 0 0 10px #fff;
+    }
+    .particle.auto sup {
+      color: #eaff00;
     }
     .golden-arbuz {
       position: absolute;
-      z-index: 2;
+      z-index: 7;
       cursor: pointer;
-      width: 48px;
-      height: 48px;
-      filter: brightness(1.7) hue-rotate(50deg) drop-shadow(0 0 10px #ffd700);
-      animation: golden-pulse 1.2s infinite alternate cubic-bezier(.4,0,.2,1);
+      width: 65px;
+      height: 65px;
+      filter: brightness(2.3) hue-rotate(40deg) drop-shadow(0 0 32px #ffe066);
+      animation: golden-appear .7s cubic-bezier(.4,0,.2,1), golden-pulse 1.2s infinite alternate;
       pointer-events: auto;
-      transition: transform 0.15s;
+      transition: transform 0.17s;
+      opacity: 1;
     }
-    .golden-arbuz:active {
-      transform: scale(1.14);
-      filter: brightness(2.2) hue-rotate(90deg) drop-shadow(0 0 20px #ffc500);
+    @keyframes golden-appear {
+      from {opacity:0;transform:scale(0.7);}
+      to {opacity:1;transform:scale(1);}
     }
     @keyframes golden-pulse {
-      from { filter: brightness(1.2) hue-rotate(35deg) drop-shadow(0 0 4px #ffe066);}
-      to   { filter: brightness(1.7) hue-rotate(60deg) drop-shadow(0 0 15px #ffd700);}
+      from { filter: brightness(1.9) hue-rotate(23deg) drop-shadow(0 0 29px #ffe066);}
+      to   { filter: brightness(2.9) hue-rotate(70deg) drop-shadow(0 0 74px #ffe066);}
+    }
+    .golden-arbuz:active {
+      transform: scale(1.22);
+      filter: brightness(3.0) hue-rotate(90deg) drop-shadow(0 0 50px #ffe066);
     }
   </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
   <canvas class="bg"></canvas>
   <div id="counter">Арбузики: 0</div>
   <img src="assets/click.png" id="clicker" alt="Арбуз" />
-  <div id="username">@unknown</div>
+  <div id="welcome-time"></div>
   <button id="upgrade-btn">Улучшения</button>
   <button id="settings-btn">Настройки</button>
   <div id="upgrade-menu" aria-label="Меню улучшений" role="dialog" aria-modal="true">
@@ -302,10 +353,19 @@
       <img src="assets/wm-magnet.png" alt="Арбузный магнит" />
       <div class="upgrade-info">
         <h3>Арбузный магнит</h3>
-        <p>Появляются золотые арбузы! Кликни по ним — +10 арбузиков. 25% шанс спавна на фоне.</p>
+        <p>Появляются золотые арбузы! Кликни по ним — +10 арбузиков. 25% шанс спавна раз в 5 секунд.</p>
         <p>Стоимость: 1250 арбузиков</p>
       </div>
       <button class="upgrade-buy" id="buy-magnet">Купить</button>
+    </div>
+    <div class="upgrade-item" id="upgrade-helper">
+      <img src="assets/wm-helper.png" alt="Арбузный помощник" />
+      <div class="upgrade-info">
+        <h3>Арбузный помощник</h3>
+        <p>Появляется автокликер, который кликает каждые 0.25 секунд.</p>
+        <p>Стоимость: 3000 арбузиков</p>
+      </div>
+      <button class="upgrade-buy" id="buy-helper">Купить</button>
     </div>
   </div>
   <div id="offline-banner">
@@ -345,6 +405,90 @@
   </div>
   <div id="debug"></div>
   <script>
+    // Welcome-анимация
+    const welcomeEl = document.getElementById("welcome-time");
+    function getTimeStr() {
+      const d = new Date();
+      let h = d.getHours().toString().padStart(2,'0');
+      let m = d.getMinutes().toString().padStart(2,'0');
+      return h + ":" + m;
+    }
+    let welcomeFull = "Welcome";
+    let animState = 0, animSub = 0, lastTimeStr = getTimeStr();
+    function welcomeLoop() {
+      if (animState === 0) { // W e l c o m e
+        if (animSub < welcomeFull.length) {
+          welcomeEl.textContent = welcomeFull.slice(0, animSub+1);
+          animSub++;
+          setTimeout(welcomeLoop, 90);
+        } else {
+          animState = 1; animSub = 0;
+          setTimeout(welcomeLoop, 210);
+        }
+      } else if (animState === 1) { // Welcome |
+        if (animSub <= 1) {
+          welcomeEl.textContent = welcomeFull + " |";
+          animSub++;
+          setTimeout(welcomeLoop, 220);
+        } else {
+          animState = 2; animSub = 0;
+          lastTimeStr = getTimeStr();
+          setTimeout(welcomeLoop, 100);
+        }
+      } else if (animState === 2) { // Welcome | {время} по буквам
+        let timeStr = getTimeStr();
+        if (animSub <= timeStr.length) {
+          welcomeEl.textContent = welcomeFull + " | " + timeStr.slice(0, animSub);
+          animSub++;
+          setTimeout(welcomeLoop, 120);
+        } else {
+          animState = 3; animSub = timeStr.length;
+          setTimeout(welcomeLoop, 900);
+        }
+      } else if (animState === 3) { // Welcome | {время} стираем по буквам
+        let timeStr = getTimeStr();
+        if (animSub > 0) {
+          welcomeEl.textContent = welcomeFull + " | " + timeStr.slice(0, animSub);
+          animSub--;
+          setTimeout(welcomeLoop, 50);
+        } else {
+          animState = 1; animSub = 0;
+          setTimeout(welcomeLoop, 220);
+        }
+      }
+    }
+    welcomeLoop();
+
+    // --- Факты для настроек ---
+    const funFacts = [
+      "Арбузы на 92% состоят из воды.",
+      "Самый тяжёлый арбуз весил более 159 кг.",
+      "Арбуз — не фрукт, а ягода.",
+      "В Китае арбузы едят даже жареными!",
+      "В Японии выращивают квадратные арбузы.",
+      "Арбуз можно использовать как шлем — его мякоть охлаждает голову.",
+      "Арбузы бывают не только красными, но и жёлтыми и даже оранжевыми!",
+      "Арбуз содержит витамины A, B6 и C.",
+      "Арбуз впервые начали выращивать в Африке более 5000 лет назад.",
+      "В Древнем Египте арбузы клали в гробницы фараонов.",
+      "В мире существует более 1200 сортов арбузов.",
+      "Арбузная кожура тоже съедобна и используется в некоторых блюдах.",
+      "Арбуз — один из немногих фруктов, у которого съедобны все части.",
+      "В США ежегодно проводится чемпионат по плеванию семечек арбуза.",
+      "Арбуз содержит аминокислоту цитруллин, полезную для сердца и сосудов."
+    ];
+    function showRandomFact() {
+      const fact = funFacts[Math.floor(Math.random()*funFacts.length)];
+      document.getElementById("fun-fact").textContent = fact;
+      document.getElementById("fun-fact").style.display = "block";
+      debug("Показан случайный факт");
+    }
+    function hideFact() {
+      document.getElementById("fun-fact").style.display = "none";
+      debug("Случайный факт скрыт");
+    }
+
+    // --- Дебаг ---
     let debugLog = [];
     function debug(msg) {
       if (window.debugEnabled) {
@@ -367,24 +511,7 @@
         document.getElementById('debug').style.display = "none";
       }
     }
-    // --- Факты для настроек ---
-    const funFacts = [
-      "Арбузы на 92% состоят из воды.",
-      "Самый тяжёлый арбуз весил более 159 кг.",
-      "Арбуз — не фрукт, а ягода.",
-      "В Китае арбузы едят даже жареными!",
-      "В Японии выращивают квадратные арбузы."
-    ];
-    function showRandomFact() {
-      const fact = funFacts[Math.floor(Math.random()*funFacts.length)];
-      document.getElementById("fun-fact").textContent = fact;
-      document.getElementById("fun-fact").style.display = "block";
-      debug("Показан случайный факт");
-    }
-    function hideFact() {
-      document.getElementById("fun-fact").style.display = "none";
-      debug("Случайный факт скрыт");
-    }
+
     // --- Основной код ---
     window.addEventListener('DOMContentLoaded', function() {
       // Основные переменные
@@ -393,12 +520,14 @@
       let clickValue = clickValueBase;
       let doublePower = localStorage.getItem("doublePower") === "true"; // Арбузное удвоение (x2)
       let autoClickerBought = localStorage.getItem("autoClickerBought") === "true";
+      let helperBought = localStorage.getItem("helperBought") === "true"; // Арбузный помощник
       let doubleClickBought = localStorage.getItem("doubleClickBought") === "true";
       let farmBought = localStorage.getItem("farmBought") === "true";
       let magnetBought = localStorage.getItem("magnetBought") === "true";
       let lastClickX = null;
       let lastClickY = null;
       let autoInterval = null;
+      let helperInterval = null;
       let goldenArbuz = null;
       let bgArbuzCount = Number(localStorage.getItem("bgArbuzCount") || 50);
 
@@ -414,6 +543,7 @@
       const buyFarmBtn = document.getElementById("buy-farm");
       const buyDoublePowerBtn = document.getElementById("buy-double-power");
       const buyMagnetBtn = document.getElementById("buy-magnet");
+      const buyHelperBtn = document.getElementById("buy-helper");
       const debugDiv = document.getElementById('debug');
       const offlineBanner = document.getElementById("offline-banner");
       const offlineMsg = document.getElementById("offline-msg");
@@ -454,6 +584,7 @@
         localStorage.setItem("farmBought", farmBought ? "true" : "");
         localStorage.setItem("magnetBought", magnetBought ? "true" : "");
         localStorage.setItem("doublePower", doublePower ? "true" : "");
+        localStorage.setItem("helperBought", helperBought ? "true" : "");
         localStorage.setItem("bgArbuzCount", bgArbuzCount);
         localStorage.setItem("lastPlayed", Date.now());
       }
@@ -489,6 +620,7 @@
         buyFarmBtn.disabled = !(count >= 500 && !farmBought);
         buyDoublePowerBtn.disabled = !(count >= 1000 && !doublePower);
         buyMagnetBtn.disabled = !(count >= 1250 && !magnetBought);
+        buyHelperBtn.disabled = !(count >= 3000 && !helperBought);
       }
       buyDoubleClickBtn.addEventListener("click", () => {
         if (count >= 100 && !doubleClickBought) {
@@ -553,6 +685,21 @@
           buyMagnetBtn.disabled = true;
           buyMagnetBtn.textContent = "Куплено";
           debug("Улучшение куплено: Арбузный магнит. Теперь могут появляться золотые арбузы на фоне!");
+          startGoldenTimer();
+          checkUpgradesAvailability();
+        }
+      });
+      buyHelperBtn.addEventListener("click", () => {
+        if (count >= 3000 && !helperBought) {
+          count -= 3000;
+          helperBought = true;
+          updateClickValue();
+          updateCounter();
+          saveAll();
+          buyHelperBtn.disabled = true;
+          buyHelperBtn.textContent = "Куплено";
+          debug("Улучшение куплено: Арбузный помощник. Быстрый автокликер включён!");
+          startHelperClicker();
           checkUpgradesAvailability();
         }
       });
@@ -578,7 +725,13 @@
         if (magnetBought) {
           buyMagnetBtn.disabled = true;
           buyMagnetBtn.textContent = "Куплено";
+          startGoldenTimer();
         } else { buyMagnetBtn.disabled = true; }
+        if (helperBought) {
+          buyHelperBtn.disabled = true;
+          buyHelperBtn.textContent = "Куплено";
+          startHelperClicker();
+        } else { buyHelperBtn.disabled = true; }
         updateClickValue();
       }
 
@@ -602,6 +755,26 @@
           debug(`Автоклик: +${clickValue}, всего: ${count}`);
         }, 1000);
       }
+      function startHelperClicker() {
+        if (helperInterval) return;
+        helperInterval = setInterval(() => {
+          updateClickValue();
+          count += clickValue;
+          updateCounter();
+          saveAll();
+          let x, y;
+          if (lastClickX !== null && lastClickY !== null) {
+            x = lastClickX + 25;
+            y = lastClickY + 25;
+          } else {
+            const rect = clicker.getBoundingClientRect();
+            x = rect.left + rect.width / 2 + 25;
+            y = rect.top + rect.height / 2 + 25;
+          }
+          createParticle(x, y, "+" + clickValue, true);
+          debug(`Помощник автокликнул: +${clickValue}, всего: ${count}`);
+        }, 250);
+      }
 
       function showOfflineIncome() {
         let lastPlayed = Number(localStorage.getItem("lastPlayed"));
@@ -618,6 +791,7 @@
         updateClickValue();
         if (autoClickerBought && offlineSecs >= 10) {
           offlineReward = offlineSecs * clickValue;
+          if (helperBought) offlineReward += Math.floor(offlineSecs * 4 * clickValue); // помощник!
           offlineBanner.style.display = "";
           offlineMsg.innerHTML =
             `Ты был(а) оффлайн <b>${Math.floor(offlineSecs / 60)} мин. ${offlineSecs % 60} сек.</b><br>Твой доход: <b>${offlineReward} арбузиков</b>`;
@@ -739,38 +913,44 @@
           });
         }
       }
-      // --- Golden Arbuz ---
-      function spawnGoldenArbuz() {
-        if (!magnetBought || goldenArbuzActive) return;
-        if (Math.random() < 0.25) { // 25% шанс
-          let x = Math.random() * (window.innerWidth - 60) + 20;
-          let y = Math.random() * (window.innerHeight - 100) + 40;
-          goldenArbuz = document.createElement('img');
-          goldenArbuz.src = "assets/bg.png";
-          goldenArbuz.className = "golden-arbuz";
-          goldenArbuz.style.left = x + "px";
-          goldenArbuz.style.top = y + "px";
-          goldenArbuz.title = "+10 арбузиков!";
-          goldenArbuzActive = true;
-          document.body.appendChild(goldenArbuz);
-          goldenArbuz.onclick = function() {
-            count += 10;
-            updateCounter();
-            saveAll();
-            createParticle(x + 20, y, "+10");
-            debug("Пойман золотой арбуз! +10 арбузиков.");
-            goldenArbuz.remove();
-            goldenArbuzActive = false;
-          }
-          setTimeout(() => {
-            if (goldenArbuzActive) {
+
+      // Golden Arbuz (магнит, каждые 5 секунд шанс 25%)
+      let goldenTimer = null;
+      function startGoldenTimer() {
+        if (goldenTimer) clearInterval(goldenTimer);
+        goldenTimer = setInterval(() => {
+          if (!magnetBought || goldenArbuzActive) return;
+          if (Math.random() < 0.25) {
+            let x = Math.random() * (window.innerWidth - 60) + 20;
+            let y = Math.random() * (window.innerHeight - 100) + 40;
+            goldenArbuz = document.createElement('img');
+            goldenArbuz.src = "assets/bg.png";
+            goldenArbuz.className = "golden-arbuz";
+            goldenArbuz.style.left = x + "px";
+            goldenArbuz.style.top = y + "px";
+            goldenArbuz.title = "+10 арбузиков!";
+            goldenArbuzActive = true;
+            document.body.appendChild(goldenArbuz);
+            goldenArbuz.onclick = function() {
+              count += 10;
+              updateCounter();
+              saveAll();
+              createParticle(x + 20, y, "+10");
+              debug("Пойман золотой арбуз! +10 арбузиков.");
               goldenArbuz.remove();
               goldenArbuzActive = false;
-              debug("Золотой арбуз исчез.");
             }
-          }, 3000);
-        }
+            setTimeout(() => {
+              if (goldenArbuzActive) {
+                goldenArbuz.remove();
+                goldenArbuzActive = false;
+                debug("Золотой арбуз исчез.");
+              }
+            }, 3000);
+          }
+        }, 5000);
       }
+
       function draw() {
         ctx.clearRect(0, 0, W, H);
         for (let a of arbs) {
@@ -788,7 +968,6 @@
           if (a.x > W + 100) a.x = -100;
           if (a.y > H + 100) a.y = -100;
         }
-        if (magnetBought) spawnGoldenArbuz();
         requestAnimationFrame(draw);
       }
       bg.onload = function() {
@@ -801,16 +980,6 @@
         spawnArbuzes();
       });
       bgArbuzSlider.addEventListener("input", spawnArbuzes);
-
-      // Telegram username
-      if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.ready();
-        const user = Telegram.WebApp.initDataUnsafe?.user;
-        if (user?.username) {
-          document.getElementById("username").textContent = "@" + user.username;
-          debug("Загружен Telegram-username");
-        }
-      }
 
       upgradeBtn.addEventListener("click", () => {
         upgradeMenu.classList.add("active");
